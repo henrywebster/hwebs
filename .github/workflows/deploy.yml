@@ -4,10 +4,10 @@ on:
   # Trigger the workflow every time you push to the `main` branch
   # Using a different branch name? Replace `main` with your branch’s name
   push:
-    branches: [ main ]
+    branches: [main]
   # Allows you to run this workflow manually from the Actions tab on GitHub.
   workflow_dispatch:
-  
+
 # Allow this job to clone the repo and create a page deployment
 permissions:
   contents: read
@@ -37,13 +37,13 @@ jobs:
 
       - name: Build
         # TODO figure out how to only build changed; next step fails if not built
-        # run: npx nx affected --target=build --parallel=3 
+        # run: npx nx affected --target=build --parallel=3
         run: npx nx build hwebs-info
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          path: "./packages/hwebs-info/dist/"
+          path: './packages/hwebs-info/dist/'
 
   deploy:
     needs: build
