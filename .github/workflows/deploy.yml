@@ -40,6 +40,9 @@ jobs:
         # run: npx nx affected --target=build --parallel=3
         run: npx nx build hwebs-info
 
+      - name: Test
+        run: npx nx affected --target=test --parallel=3
+
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v1
         with:
