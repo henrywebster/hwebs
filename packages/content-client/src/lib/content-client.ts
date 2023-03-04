@@ -6,7 +6,13 @@ const mapClient = () => {
   const data = new Map<string, string>();
   return {
     get(id: string) {
-      return data.get(id);
+      if (!data.has(id)) {
+        return undefined;
+      }
+      return { id: id, title: data.get(id) };
+    },
+    list() {
+      return Array.from(data).map(([k, v]) => ({ id: k, title: v }));
     },
     create(title: string) {
       const id = uuidv4();
@@ -36,6 +42,9 @@ const sqliteClient = () => {
   return {
     get(id: string) {
       return get_query.get(id);
+    },
+    list() {
+      return db.prepare('SELECT rowid AS id, title FROM items').all();
     },
     create(title: string) {
       const info = db
