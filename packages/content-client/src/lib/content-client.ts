@@ -3,7 +3,7 @@ import Database = require('better-sqlite3');
 import assert = require('assert');
 
 const mapClient = () => {
-  const data = new Map<string, any>();
+  const data = new Map<string, string>();
   return {
     get(id: string) {
       return data.get(id);
@@ -29,9 +29,7 @@ const mapClient = () => {
 
 const sqliteClient = () => {
   const db = new Database(':memory:');
-  const create_table = db
-    .prepare('CREATE TABLE items (title TEXT NOT NULL)')
-    .run();
+  db.prepare('CREATE TABLE items (title TEXT NOT NULL)').run();
   const get_query = db.prepare(
     'SELECT rowid AS id, title FROM items WHERE rowid=?'
   );
