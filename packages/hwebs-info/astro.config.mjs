@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  outDir: '../../dist/packages/hwebs-info',
+	site: 'https://henrywebster.github.io',
+	base: '/hwebs/packages/hwebs-info',
 });
