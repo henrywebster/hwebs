@@ -38,7 +38,7 @@ jobs:
       - name: Build
         # TODO figure out how to only build changed; next step fails if not built
         # run: npx nx affected --target=build --parallel=3
-        run: npx nx build hwebs-info
+        run: npx nx run-many --target=build --parallel=3
 
       - name: Test
         run: npx nx affected --target=test --parallel=3
