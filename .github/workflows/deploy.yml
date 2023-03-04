@@ -36,7 +36,9 @@ jobs:
         run: pnpm nx affected --target=lint --parallel=3
 
       - name: Build
-        run: npx nx affected --target=build --parallel=3 
+        # TODO figure out how to only build changed; next step fails if not built
+        # run: npx nx affected --target=build --parallel=3 
+        run: npx nx build hwebs-info
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v1
