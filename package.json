@@ -2,13 +2,28 @@
   "name": "hwebs",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "postinstall": "node ./tools/scripts/patch-nx-cli.js"
+  },
   "private": true,
   "devDependencies": {
+    "@nrwl/cypress": "15.8.5",
+    "@nrwl/eslint-plugin-nx": "15.8.5",
     "@nrwl/js": "15.8.5",
+    "@nrwl/linter": "15.8.5",
     "@nrwl/workspace": "15.8.5",
     "@nxtensions/astro": "^3.3.0",
+    "@types/node": "16.11.7",
+    "@typescript-eslint/eslint-plugin": "^5.36.1",
+    "@typescript-eslint/parser": "^5.36.1",
+    "astro": "^2.0.0",
+    "cypress": "^12.2.0",
+    "eslint": "~8.15.0",
+    "eslint-config-prettier": "8.1.0",
+    "eslint-plugin-cypress": "^2.10.3",
     "nx": "15.8.5",
-    "prettier": "^2.6.2"
-  }
+    "prettier": "^2.6.2",
+    "typescript": "~4.9.5"
+  },
+  "dependencies": {}
 }

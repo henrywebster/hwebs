@@ -1,0 +1,25 @@
+{
+  "name": "hwebs-info-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/hwebs-info-e2e/src",
+  "projectType": "application",
+  "targets": {
+    "e2e": {
+      "executor": "@nrwl/cypress:cypress",
+      "options": {
+        "cypressConfig": "packages/hwebs-info-e2e/cypress.config.ts",
+        "devServerTarget": "hwebs-info:dev",
+        "testingType": "e2e"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/hwebs-info-e2e/**/*.{js,ts}"]
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["hwebs-info"]
+}
