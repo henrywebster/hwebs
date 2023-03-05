@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  HWEBS_INFO_CLIENT: sqlite
+  HWEBS_INFO_SQLITE_DB_FILE: packages/hwebs-info/src/db/test.db
 
 on:
   # Trigger the workflow every time you push to the `main` branch
