@@ -40,6 +40,12 @@ jobs:
         # run: npx nx affected --target=build --parallel=3
         run: npx nx run-many --target=build --parallel=3
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
       - name: Run DynamoDB
         uses: rrainn/dynamodb-action@v2.0.1
 
