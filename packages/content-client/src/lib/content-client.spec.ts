@@ -33,8 +33,8 @@ describe.each([
   });
   it('should get all data', () => {
     const testClient = client();
-    const contentA = testClient.create('My data A');
-    const contentB = testClient.create('My data B');
+    testClient.create('My data A');
+    testClient.create('My data B');
     const result = testClient.list();
     expect(result.length).toEqual(2);
   });
