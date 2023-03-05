@@ -1,6 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import Database = require('better-sqlite3');
 import assert = require('assert');
+import {
+  DynamoDBDocumentClient,
+  PutCommand,
+  GetCommand,
+  ScanCommand,
+  UpdateCommand,
+  DeleteCommand,
+} from '@aws-sdk/lib-dynamodb';
 
 const mapClient = (data: Map<string, string>) => {
   return {
@@ -27,7 +35,7 @@ const mapClient = (data: Map<string, string>) => {
     },
     async remove(id: string) {
       data.delete(id);
-      return undefined;
+      return id;
     },
   };
 };
@@ -59,8 +67,81 @@ const sqliteClient = (db: Database.Database) => {
     async remove(id: string) {
       const info = db.prepare('DELETE FROM items WHERE rowid=?').run(id);
       assert(info.changes === 1);
-      return undefined;
+      return id;
     },
   };
 };
-export { mapClient, sqliteClient };
+const dynamodbClient = (client: DynamoDBDocumentClient) => {
+  return {
+    async get(id: string) {
+      const params = {
+        TableName: 'Items',
+        Key: {
+          Id: id,
+        },
+        // TODO need for testing but what is impact?
+        ConsistentRead: true,
+      };
+      return client
+        .send(new GetCommand(params))
+        .then((data) =>
+          data.Item === undefined
+            ? undefined
+            : { id: data.Item.Id, title: data.Item.Title }
+        );
+    },
+    async list() {
+      const params = {
+        TableName: 'Items',
+      };
+      return client
+        .send(new ScanCommand(params))
+        .then((data) =>
+          data.Items.map((item) => ({ id: item.Id, title: item.Title }))
+        );
+    },
+    async create(title: string) {
+      const params = {
+        TableName: 'Items',
+        Item: {
+          Id: uuidv4(),
+          Title: title,
+        },
+      };
+      return client
+        .send(new PutCommand(params))
+        .then(() => ({ id: params.Item.Id, title: params.Item.Title }));
+    },
+    async update(id: string, title: string) {
+      const params = {
+        TableName: 'Items',
+        Key: {
+          Id: id,
+        },
+        UpdateExpression: 'SET #t = :t',
+        ExpressionAttributeValues: {
+          ':t': title,
+        },
+        ExpressionAttributeNames: {
+          '#t': 'Title',
+        },
+        ReturnValues: 'ALL_NEW',
+      };
+
+      return client.send(new UpdateCommand(params)).then((content) => ({
+        id: content.Attributes.Id,
+        title: content.Attributes.Title,
+      }));
+    },
+    async remove(id: string) {
+      const params = {
+        TableName: 'Items',
+        Key: {
+          Id: id,
+        },
+      };
+      return client.send(new DeleteCommand(params)).then(() => id);
+    },
+  };
+};
+export { mapClient, sqliteClient, dynamodbClient };

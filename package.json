@@ -38,6 +38,8 @@
     "typescript": "~4.9.5"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.284.0",
+    "@aws-sdk/lib-dynamodb": "^3.284.0",
     "@swc/helpers": "~0.4.11",
     "tslib": "^2.3.0"
   }
