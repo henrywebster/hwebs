@@ -32,7 +32,7 @@ const mapClient = (data: Map<string, string>) => {
   };
 };
 
-const sqliteClient = (db: Database) => {
+const sqliteClient = (db: Database.Database) => {
   const get_query = 'SELECT rowid AS id, title FROM items WHERE rowid=?';
   return {
     get(id: string) {
