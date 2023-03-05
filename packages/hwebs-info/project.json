@@ -7,13 +7,7 @@
     "build": {
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "executor": "@nxtensions/astro:build",
-      "options": {},
-      "dependsOn": [
-        {
-          "target": "^seed",
-          "projects": "self"
-        }
-      ]
+      "options": {}
     },
     "dev": {
       "executor": "@nxtensions/astro:dev",
