@@ -78,10 +78,10 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
       };
       return client
         .send(new GetCommand(params))
-        .then((data) =>
-          data.Item === undefined
+        .then(({ Item }) =>
+          Item === undefined
             ? undefined
-            : { id: data.Item['Id'], title: data.Item['Title'] }
+            : { id: Item['Id'], title: Item['Title'] }
         );
     },
     async list() {
