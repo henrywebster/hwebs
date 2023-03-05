@@ -33,7 +33,7 @@ jobs:
         run: pnpm nx format:check
 
       - name: Lint
-        run: pnpm nx affected --target=lint --parallel=3
+        run: pnpm nx run-many --target=lint --parallel=3
 
       - name: Build
         # TODO figure out how to only build changed; next step fails if not built
@@ -44,7 +44,7 @@ jobs:
         uses: rrainn/dynamodb-action@v2.0.1
 
       - name: Test
-        run: npx nx affected --target=test --parallel=3
+        run: npx nx run-many --target=test --parallel=3
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v1
