@@ -1,5 +1,9 @@
 name: Deploy to GitHub Pages
 
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
 on:
   # Trigger the workflow every time you push to the `main` branch
   # Using a different branch name? Replace `main` with your branch’s name
@@ -39,13 +43,6 @@ jobs:
         # TODO figure out how to only build changed; next step fails if not built
         # run: npx nx affected --target=build --parallel=3
         run: npx nx run-many --target=build --parallel=3
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
 
       - name: Run DynamoDB
         uses: rrainn/dynamodb-action@v2.0.1
