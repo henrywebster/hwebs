@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import Database = require('better-sqlite3');
-import assert = require('assert');
+import { Database } from 'better-sqlite3';
 import {
   DynamoDBDocumentClient,
   PutCommand,
@@ -40,7 +39,7 @@ const mapClient = (data: Map<string, string>) => {
   };
 };
 
-const sqliteClient = (db: Database.Database) => {
+const sqliteClient = (db: Database) => {
   const get_query = 'SELECT rowid AS id, title FROM items WHERE rowid=?';
   return {
     async get(id: string) {
@@ -53,20 +52,15 @@ const sqliteClient = (db: Database.Database) => {
       const info = db
         .prepare('INSERT INTO items (title) VALUES (?)')
         .run(title);
-      assert(info.changes === 1);
       return db.prepare(get_query).get(info.lastInsertRowid);
     },
     async update(id: string, title: string) {
       // TODO make non-destructive
-      const info = db
-        .prepare('UPDATE items SET title=? WHERE rowid=?')
-        .run(title, id);
-      assert(info.changes === 1);
+      db.prepare('UPDATE items SET title=? WHERE rowid=?').run(title, id);
       return db.prepare(get_query).get(id);
     },
     async remove(id: string) {
-      const info = db.prepare('DELETE FROM items WHERE rowid=?').run(id);
-      assert(info.changes === 1);
+      db.prepare('DELETE FROM items WHERE rowid=?').run(id);
       return id;
     },
   };
