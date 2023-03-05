@@ -10,7 +10,7 @@
       "options": {},
       "dependsOn": [
         {
-          "target": "seed",
+          "target": "^seed",
           "projects": "self"
         }
       ]
@@ -22,7 +22,7 @@
     "preview": {
       "dependsOn": [
         {
-          "target": "^build",
+          "target": "build",
           "projects": "self"
         }
       ],
@@ -38,7 +38,7 @@
     "seed": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node ./packages/hwebs-info/src/db/index.js"
+        "command": "node ./packages/hwebs-info/src/db/index.mjs"
       }
     }
   },

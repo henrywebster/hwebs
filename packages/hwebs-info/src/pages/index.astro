@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Card from '../components/Card.astro';
-import { client } from '../lib/sqlite-client.ts'
+import { client } from '../lib/client.ts';
 
 const posts = await client.list();
 ---
