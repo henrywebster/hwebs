@@ -28,6 +28,12 @@
     },
     "sync": {
       "executor": "@nxtensions/astro:sync"
+    },
+    "seed": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ./packages/hwebs-info/src/db/index.js"
+      }
     }
   },
   "tags": []
