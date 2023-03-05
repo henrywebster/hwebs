@@ -87,7 +87,7 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
         .then((data) =>
           data.Item === undefined
             ? undefined
-            : { id: data.Item.Id, title: data.Item.Title }
+            : { id: data.Item['Id'], title: data.Item['Title'] }
         );
     },
     async list() {
@@ -96,8 +96,8 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
       };
       return client
         .send(new ScanCommand(params))
-        .then((data) =>
-          data.Items.map((item) => ({ id: item.Id, title: item.Title }))
+        .then(({ Items }) =>
+          Items?.map((item) => ({ id: item['Id'], title: item['Title'] }))
         );
     },
     async create(title: string) {
@@ -110,7 +110,7 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
       };
       return client
         .send(new PutCommand(params))
-        .then(() => ({ id: params.Item.Id, title: params.Item.Title }));
+        .then(() => ({ id: params.Item['Id'], title: params.Item['Title'] }));
     },
     async update(id: string, title: string) {
       const params = {
@@ -128,10 +128,14 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
         ReturnValues: 'ALL_NEW',
       };
 
-      return client.send(new UpdateCommand(params)).then((content) => ({
-        id: content.Attributes.Id,
-        title: content.Attributes.Title,
-      }));
+      return client.send(new UpdateCommand(params)).then(({ Attributes }) =>
+        Attributes == undefined
+          ? undefined
+          : {
+              id: Attributes['Id'],
+              title: Attributes['Title'],
+            }
+      );
     },
     async remove(id: string) {
       const params = {
