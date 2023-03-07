@@ -14,36 +14,6 @@ interface Content {
   readonly title: string;
 }
 
-const mapClient = (data: Map<string, string>) => {
-  return {
-    async get(id: string): Promise<Content | undefined> {
-      if (!data.has(id)) {
-        return undefined;
-      }
-      return { id: id, title: data.get(id)! };
-    },
-    async list(): Promise<Array<Content>> {
-      return Array.from(data).map(([k, v]) => ({ id: k, title: v }));
-    },
-    async create(title: string): Promise<Content> {
-      const id = uuidv4();
-      data.set(id, title);
-      return { id: id, title: title };
-    },
-    async update(id: string, title: string): Promise<Content | undefined> {
-      if (!data.has(id)) {
-        return undefined;
-      }
-      data.set(id, title);
-      return { id: id, title: title };
-    },
-    async remove(id: string): Promise<String> {
-      data.delete(id);
-      return id;
-    },
-  };
-};
-
 const sqliteClient = (db: Database) => {
   const get_query = 'SELECT rowid AS id, title FROM items WHERE rowid=?';
   return {
@@ -150,4 +120,4 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
     },
   };
 };
-export { mapClient, sqliteClient, dynamodbClient };
+export { sqliteClient, dynamodbClient };

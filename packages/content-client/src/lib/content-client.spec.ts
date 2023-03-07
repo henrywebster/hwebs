@@ -1,4 +1,4 @@
-import { mapClient, sqliteClient, dynamodbClient } from './content-client';
+import { sqliteClient, dynamodbClient } from './content-client';
 import Database = require('better-sqlite3');
 import {
   DynamoDBClient,
@@ -7,7 +7,6 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
-const globalMap = new Map<string, string>();
 const globalSqlite = new Database(':memory:');
 const globalDynamodb = new DynamoDBClient({
   region: 'us-east-1',
@@ -40,13 +39,11 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  globalMap.clear();
   globalSqlite.prepare('DROP TABLE items').run();
   await globalDynamodb.send(new DeleteTableCommand({ TableName: 'Items' }));
 });
 
 describe.each([
-  { name: 'map', client: mapClient(globalMap) },
   { name: 'sqlite', client: sqliteClient(globalSqlite) },
   {
     name: 'dynamodb',
