@@ -1,0 +1,31 @@
+---
+export interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<li class="section">
+		<h2>
+			{title}
+		</h2>
+</li>
+
+<style>
+	.section {
+		list-style: none;
+		display: flex;
+		padding: 1rem;
+		background-color: white;
+		border-radius: 0.5rem;
+		background-position: 100%;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+	}
+
+	h2 {
+		margin: 0;
+		font-size: 1.25rem;
+	}
+
+</style>
