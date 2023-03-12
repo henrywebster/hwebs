@@ -54,6 +54,12 @@ const sqliteClient = (db: Database) => {
   };
 };
 const dynamodbClient = (client: DynamoDBDocumentClient) => {
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const convertRecord = (record: Record<string, any>) => ({
+    id: record['id'],
+    title: record['title'],
+    description: record['description'],
+  });
   return {
     async get(id: string): Promise<Content | undefined> {
       const params = {
@@ -66,7 +72,9 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
       };
       return client
         .send(new GetCommand(params))
-        .then(({ Item }) => (Item === undefined ? undefined : Item));
+        .then(({ Item }) =>
+          Item === undefined ? undefined : convertRecord(Item)
+        );
     },
     async list(): Promise<Array<Content>> {
       const params = {
@@ -74,7 +82,9 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
       };
       return client
         .send(new ScanCommand(params))
-        .then(({ Items }) => (Items === undefined ? [] : Items));
+        .then(({ Items }) =>
+          Items === undefined ? [] : Items.map(convertRecord)
+        );
     },
     async create(title: string, description: string): Promise<Content> {
       const params = {
@@ -108,7 +118,7 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
       return client
         .send(new UpdateCommand(params))
         .then(({ Attributes }) =>
-          Attributes == undefined ? undefined : Attributes
+          Attributes == undefined ? undefined : convertRecord(Attributes)
         );
     },
     async remove(id: string): Promise<string> {

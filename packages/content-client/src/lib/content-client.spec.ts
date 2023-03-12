@@ -70,10 +70,10 @@ describe.each([
   it('should get the data', () =>
     client.create('My data', 'this is my data').then((content) =>
       client.get(content.id).then(({ id, ...content }) =>
-        expect({
+        expect(content).toEqual({
           title: 'My data',
           description: 'this is my data',
-        }).toEqual(content)
+        })
       )
     ));
   it('should update the data', () =>
@@ -81,10 +81,10 @@ describe.each([
       client
         .update(content.id, 'My updated data', 'this is my new data')
         .then(({ id, ...content }) =>
-          expect({
+          expect(content).toEqual({
             title: 'My updated data',
             description: 'this is my new data',
-          }).toEqual(content)
+          })
         )
     ));
   it('should delete the data', () =>
