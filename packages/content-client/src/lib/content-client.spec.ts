@@ -1,3 +1,5 @@
+/*eslint @typescript-eslint/no-unused-vars: ["error", { "ignoreRestSiblings": true }]*/
+
 import { sqliteClient, dynamodbClient } from './content-client';
 import Database = require('better-sqlite3');
 import {
@@ -14,17 +16,21 @@ const globalDynamodb = new DynamoDBClient({
 });
 
 beforeEach(async () => {
-  globalSqlite.prepare('CREATE TABLE items (title TEXT NOT NULL)').run();
+  globalSqlite
+    .prepare(
+      'CREATE TABLE items (title TEXT NOT NULL, description TEXT NOT NULL)'
+    )
+    .run();
   const params = {
     AttributeDefinitions: [
       {
-        AttributeName: 'Id',
+        AttributeName: 'id',
         AttributeType: 'S',
       },
     ],
     KeySchema: [
       {
-        AttributeName: 'Id',
+        AttributeName: 'id',
         KeyType: 'HASH',
       },
     ],
@@ -49,34 +55,41 @@ describe.each([
     name: 'dynamodb',
     client: dynamodbClient(DynamoDBDocumentClient.from(globalDynamodb)),
   },
-])('Content Client $name', ({ client }) => {
+])('Content Client: $name', ({ client }) => {
   it('should return undefined when key is not preset', () =>
     client.get('abc').then((content) => expect(content).toEqual(undefined)));
 
   it('should create the data', () =>
-    client
-      .create('My data')
-      .then((content) => expect(content.title).toEqual('My data')));
+    client.create('My data', 'this is my data').then(({ id, ...content }) =>
+      expect(content).toEqual({
+        title: 'My data',
+        description: 'this is my data',
+      })
+    ));
 
   it('should get the data', () =>
-    client
-      .create('My data')
-      .then((content) =>
-        client
-          .get(content.id)
-          .then((content) => expect(content.title).toEqual('My data'))
-      ));
+    client.create('My data', 'this is my data').then((content) =>
+      client.get(content.id).then(({ id, ...content }) =>
+        expect({
+          title: 'My data',
+          description: 'this is my data',
+        }).toEqual(content)
+      )
+    ));
   it('should update the data', () =>
-    client
-      .create('My data')
-      .then((content) =>
-        client
-          .update(content.id, 'My updated data')
-          .then((content) => expect(content.title).toEqual('My updated data'))
-      ));
+    client.create('My data', 'this is my data').then((content) =>
+      client
+        .update(content.id, 'My updated data', 'this is my new data')
+        .then(({ id, ...content }) =>
+          expect({
+            title: 'My updated data',
+            description: 'this is my new data',
+          }).toEqual(content)
+        )
+    ));
   it('should delete the data', () =>
     client
-      .create('My data')
+      .create('My data', 'this is my data')
       .then((content) =>
         client
           .remove(content.id)
@@ -85,7 +98,10 @@ describe.each([
           )
       ));
   it('should get all data', () =>
-    Promise.all([client.create('My data A'), client.create('My data B')]).then(
-      () => client.list().then((contents) => expect(contents.length).toEqual(2))
+    Promise.all([
+      client.create('My data A', 'this is data A'),
+      client.create('My data B', 'this is data B'),
+    ]).then(() =>
+      client.list().then((contents) => expect(contents.length).toEqual(2))
     ));
 });

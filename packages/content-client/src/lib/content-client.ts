@@ -12,27 +12,39 @@ import {
 interface Content {
   readonly id: string;
   readonly title: string;
+  readonly description: string;
 }
 
 const sqliteClient = (db: Database) => {
-  const get_query = 'SELECT rowid AS id, title FROM items WHERE rowid=?';
+  const get_query =
+    'SELECT rowid AS id, title, description FROM items WHERE rowid=?';
   return {
     async get(id: string): Promise<Content | undefined> {
       return db.prepare(get_query).get(id);
     },
     async list(): Promise<Array<Content>> {
-      return db.prepare('SELECT rowid AS id, title FROM items').all();
+      return db
+        .prepare('SELECT rowid AS id, title, description FROM items')
+        .all();
     },
-    async create(title: string): Promise<Content> {
+    async create(title: string, description: string): Promise<Content> {
       const info = db
-        .prepare('INSERT INTO items (title) VALUES (?)')
-        .run(title);
+        .prepare('INSERT INTO items (title, description) VALUES (?, ?)')
+        .run(title, description);
       return db.prepare(get_query).get(info.lastInsertRowid);
     },
-    async update(id: string, title: string): Promise<Content> {
+    async update(
+      id: string,
+      title: string,
+      description: string
+    ): Promise<Content> {
       // TODO make non-destructive
       // TODO no check if it doesn't exist
-      db.prepare('UPDATE items SET title=? WHERE rowid=?').run(title, id);
+      db.prepare('UPDATE items SET title=?, description=? WHERE rowid=?').run(
+        title,
+        description,
+        id
+      );
       return db.prepare(get_query).get(id);
     },
     async remove(id: string): Promise<string> {
@@ -47,18 +59,14 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
       const params = {
         TableName: 'Items',
         Key: {
-          Id: id,
+          id: id,
         },
         // TODO need for testing but what is impact?
         ConsistentRead: true,
       };
       return client
         .send(new GetCommand(params))
-        .then(({ Item }) =>
-          Item === undefined
-            ? undefined
-            : { id: Item['Id'], title: Item['Title'] }
-        );
+        .then(({ Item }) => (Item === undefined ? undefined : Item));
     },
     async list(): Promise<Array<Content>> {
       const params = {
@@ -66,54 +74,48 @@ const dynamodbClient = (client: DynamoDBDocumentClient) => {
       };
       return client
         .send(new ScanCommand(params))
-        .then(({ Items }) =>
-          Items === undefined
-            ? []
-            : Items.map((item) => ({ id: item['Id'], title: item['Title'] }))
-        );
+        .then(({ Items }) => (Items === undefined ? [] : Items));
     },
-    async create(title: string): Promise<Content> {
+    async create(title: string, description: string): Promise<Content> {
       const params = {
         TableName: 'Items',
         Item: {
-          Id: uuidv4(),
-          Title: title,
+          id: uuidv4(),
+          title: title,
+          description: description,
         },
       };
-      return client
-        .send(new PutCommand(params))
-        .then(() => ({ id: params.Item['Id'], title: params.Item['Title'] }));
+      return client.send(new PutCommand(params)).then(() => params.Item);
     },
-    async update(id: string, title: string): Promise<Content | undefined> {
+    async update(
+      id: string,
+      title: string,
+      description: string
+    ): Promise<Content | undefined> {
       const params = {
         TableName: 'Items',
         Key: {
-          Id: id,
+          id: id,
         },
-        UpdateExpression: 'SET #t = :t',
+        UpdateExpression: 'SET title = :t, description = :d',
         ExpressionAttributeValues: {
           ':t': title,
-        },
-        ExpressionAttributeNames: {
-          '#t': 'Title',
+          ':d': description,
         },
         ReturnValues: 'ALL_NEW',
       };
 
-      return client.send(new UpdateCommand(params)).then(({ Attributes }) =>
-        Attributes == undefined
-          ? undefined
-          : {
-              id: Attributes['Id'],
-              title: Attributes['Title'],
-            }
-      );
+      return client
+        .send(new UpdateCommand(params))
+        .then(({ Attributes }) =>
+          Attributes == undefined ? undefined : Attributes
+        );
     },
     async remove(id: string): Promise<string> {
       const params = {
         TableName: 'Items',
         Key: {
-          Id: id,
+          id: id,
         },
       };
       return client.send(new DeleteCommand(params)).then(() => id);
