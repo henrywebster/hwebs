@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS items;
-CREATE TABLE IF NOT EXISTS items (title TEXT NOT NULL);
-INSERT INTO items (title) VALUES ('Code');
-INSERT INTO items (title) VALUES ('Games');
-INSERT INTO items (title) VALUES ('Music');
-INSERT INTO items (title) VALUES ('Animation');
-INSERT INTO items (title) VALUES ('About');
+CREATE TABLE IF NOT EXISTS items (title TEXT NOT NULL, description TEXT NOT NULL);
+INSERT INTO items (title, description) VALUES ('Code', 'This is my code');
+INSERT INTO items (title, description) VALUES ('Games', 'These are my games');
+INSERT INTO items (title, description) VALUES ('Music', 'This is my music');
+INSERT INTO items (title, description) VALUES ('Animation', 'This is my animation');
+INSERT INTO items (title, description) VALUES ('About', 'This is me');
