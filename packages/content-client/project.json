@@ -34,6 +34,13 @@
           "ci": true,
           "codeCoverage": true
         }
+      },
+      "dependsOn": ["dynamodb"]
+    },
+    "dynamodb": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "sh ./packages/content-client/scripts/dynamodb/run.sh ./packages/content-client/scripts/dynamodb/docker-compose.yml"
       }
     }
   },
