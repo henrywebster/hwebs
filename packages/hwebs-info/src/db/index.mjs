@@ -1,6 +1,5 @@
 import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
 import {
   DynamoDBClient,
   CreateTableCommand,
@@ -8,13 +7,27 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 
-if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
-  const seeding = fs.readFileSync('packages/hwebs-info/src/db/seeding.sql', {
-    encoding: 'utf-8',
-  });
+// TODO Define creation with client
+// TODO Create different project for dynamodb so it can be shared
+const data = [
+  { title: 'Code', description: 'This is my code', category: 'home' },
+  { title: 'Games', description: 'These are my games', category: 'home' },
+  { title: 'Music', description: 'This is my music', category: 'home' },
+  { title: 'Animation', description: 'This is my animation', category: 'home' },
+  { title: 'About', description: 'This is me', category: 'home' },
+];
 
+if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
   const db = new Database('packages/hwebs-info/src/db/test.db');
-  db.exec(seeding);
+  db.prepare('DROP TABLE IF EXISTS items').run();
+  db.prepare(
+    'CREATE TABLE items (title TEXT NOT NULL, description TEXT NOT NULL, category TEXT NOT NULL)'
+  ).run();
+
+  const insertData = db.prepare(
+    'INSERT INTO items (title, description, category) VALUES (@title, @description, @category)'
+  );
+  data.map((item) => insertData.run(item));
 } else if (process.env.HWEBS_INFO_CLIENT === 'dynamodb') {
   // TODO add .env
   const dynamodb = new DynamoDBClient({
@@ -25,13 +38,13 @@ if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
   const params = {
     AttributeDefinitions: [
       {
-        AttributeName: 'Id',
+        AttributeName: 'id',
         AttributeType: 'S',
       },
     ],
     KeySchema: [
       {
-        AttributeName: 'Id',
+        AttributeName: 'id',
         KeyType: 'HASH',
       },
     ],
@@ -46,29 +59,23 @@ if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
 
   // TODO check if exists first?
   // add await bs
+
   await dynamodb
     .send(new DeleteTableCommand({ TableName: 'Items' }))
+    .catch((error) => {
+      return;
+    })
     .then((response) => dynamodb.send(new CreateTableCommand(params)))
     .then((response) =>
-      Promise.all([
-        client.send(
-          new PutCommand({
-            TableName: 'Items',
-            Item: {
-              Id: uuidv4(),
-              Title: 'Post 1',
-            },
-          })
-        ),
-        client.send(
-          new PutCommand({
-            TableName: 'Items',
-            Item: {
-              Id: uuidv4(),
-              Title: 'Post 2',
-            },
-          })
-        ),
-      ])
+      Promise.all(
+        data.map((item) =>
+          client.send(
+            new PutCommand({
+              TableName: 'Items',
+              Item: { id: uuidv4(), ...item },
+            })
+          )
+        )
+      )
     );
 }
