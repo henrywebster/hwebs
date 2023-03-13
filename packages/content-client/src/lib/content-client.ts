@@ -15,7 +15,19 @@ interface Content {
   readonly description: string;
 }
 
-const sqliteClient = (db: Database) => {
+interface Client {
+  get(id: string): Promise<Content | undefined>;
+  list(): Promise<Array<Content>>;
+  create(title: string, description: string): Promise<Content>;
+  update(
+    id: string,
+    title: string,
+    description: string
+  ): Promise<Content | undefined>;
+  remove(id: string): Promise<string>;
+}
+
+const sqliteClient = (db: Database): Client => {
   const get_query =
     'SELECT rowid AS id, title, description FROM items WHERE rowid=?';
   return {
@@ -37,7 +49,7 @@ const sqliteClient = (db: Database) => {
       id: string,
       title: string,
       description: string
-    ): Promise<Content> {
+    ): Promise<Content | undefined> {
       // TODO make non-destructive
       // TODO no check if it doesn't exist
       db.prepare('UPDATE items SET title=?, description=? WHERE rowid=?').run(
@@ -53,7 +65,7 @@ const sqliteClient = (db: Database) => {
     },
   };
 };
-const dynamodbClient = (client: DynamoDBDocumentClient) => {
+const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convertRecord = (record: Record<string, any>) => ({
     id: record['id'],
