@@ -18,7 +18,7 @@ const globalDynamodb = new DynamoDBClient({
 beforeEach(async () => {
   globalSqlite
     .prepare(
-      'CREATE TABLE items (title TEXT NOT NULL, description TEXT NOT NULL)'
+      'CREATE TABLE items (title TEXT NOT NULL, description TEXT NOT NULL, category TEXT NOT NULL)'
     )
     .run();
   const params = {
@@ -60,36 +60,41 @@ describe.each([
     client.get('abc').then((content) => expect(content).toEqual(undefined)));
 
   it('should create the data', () =>
-    client.create('My data', 'this is my data').then(({ id, ...content }) =>
-      expect(content).toEqual({
-        title: 'My data',
-        description: 'this is my data',
-      })
-    ));
+    client
+      .create('My data', 'this is my data', 'data')
+      .then(({ id, ...content }) =>
+        expect(content).toEqual({
+          title: 'My data',
+          description: 'this is my data',
+          category: 'data',
+        })
+      ));
 
   it('should get the data', () =>
-    client.create('My data', 'this is my data').then((content) =>
+    client.create('My data', 'this is my data', 'data').then((content) =>
       client.get(content.id).then(({ id, ...content }) =>
         expect(content).toEqual({
           title: 'My data',
           description: 'this is my data',
+          category: 'data',
         })
       )
     ));
   it('should update the data', () =>
-    client.create('My data', 'this is my data').then((content) =>
+    client.create('My data', 'this is my data', 'data').then((content) =>
       client
-        .update(content.id, 'My updated data', 'this is my new data')
+        .update(content.id, 'My updated data', 'this is my new data', 'sports')
         .then(({ id, ...content }) =>
           expect(content).toEqual({
             title: 'My updated data',
             description: 'this is my new data',
+            category: 'sports',
           })
         )
     ));
   it('should delete the data', () =>
     client
-      .create('My data', 'this is my data')
+      .create('My data', 'this is my data', 'data')
       .then((content) =>
         client
           .remove(content.id)
@@ -99,8 +104,8 @@ describe.each([
       ));
   it('should get all data', () =>
     Promise.all([
-      client.create('My data A', 'this is data A'),
-      client.create('My data B', 'this is data B'),
+      client.create('My data A', 'this is data A', 'data'),
+      client.create('My data B', 'this is data B', 'data'),
     ]).then(() =>
       client.list().then((contents) => expect(contents.length).toEqual(2))
     ));

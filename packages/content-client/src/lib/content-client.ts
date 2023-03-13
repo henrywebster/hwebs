@@ -13,23 +13,29 @@ interface Content {
   readonly id: string;
   readonly title: string;
   readonly description: string;
+  readonly category: string;
 }
 
 interface Client {
   get(id: string): Promise<Content | undefined>;
   list(): Promise<Array<Content>>;
-  create(title: string, description: string): Promise<Content>;
+  create(
+    title: string,
+    description: string,
+    category: string
+  ): Promise<Content>;
   update(
     id: string,
     title: string,
-    description: string
+    description: string,
+    category: string
   ): Promise<Content | undefined>;
   remove(id: string): Promise<string>;
 }
 
 const sqliteClient = (db: Database): Client => {
   const get_query =
-    'SELECT rowid AS id, title, description FROM items WHERE rowid=?';
+    'SELECT rowid AS id, title, description, category FROM items WHERE rowid=?';
   return {
     async get(id: string): Promise<Content | undefined> {
       return db.prepare(get_query).get(id);
@@ -39,24 +45,29 @@ const sqliteClient = (db: Database): Client => {
         .prepare('SELECT rowid AS id, title, description FROM items')
         .all();
     },
-    async create(title: string, description: string): Promise<Content> {
+    async create(
+      title: string,
+      description: string,
+      category: string
+    ): Promise<Content> {
       const info = db
-        .prepare('INSERT INTO items (title, description) VALUES (?, ?)')
-        .run(title, description);
+        .prepare(
+          'INSERT INTO items (title, description, category) VALUES (?, ?, ?)'
+        )
+        .run(title, description, category);
       return db.prepare(get_query).get(info.lastInsertRowid);
     },
     async update(
       id: string,
       title: string,
-      description: string
+      description: string,
+      category: string
     ): Promise<Content | undefined> {
       // TODO make non-destructive
       // TODO no check if it doesn't exist
-      db.prepare('UPDATE items SET title=?, description=? WHERE rowid=?').run(
-        title,
-        description,
-        id
-      );
+      db.prepare(
+        'UPDATE items SET title=?, description=?, category=? WHERE rowid=?'
+      ).run(title, description, category, id);
       return db.prepare(get_query).get(id);
     },
     async remove(id: string): Promise<string> {
@@ -71,6 +82,7 @@ const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
     id: record['id'],
     title: record['title'],
     description: record['description'],
+    category: record['category'],
   });
   return {
     async get(id: string): Promise<Content | undefined> {
@@ -98,13 +110,18 @@ const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
           Items === undefined ? [] : Items.map(convertRecord)
         );
     },
-    async create(title: string, description: string): Promise<Content> {
+    async create(
+      title: string,
+      description: string,
+      category: string
+    ): Promise<Content> {
       const params = {
         TableName: 'Items',
         Item: {
           id: uuidv4(),
           title: title,
           description: description,
+          category: category,
         },
       };
       return client.send(new PutCommand(params)).then(() => params.Item);
@@ -112,17 +129,19 @@ const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
     async update(
       id: string,
       title: string,
-      description: string
+      description: string,
+      category: string
     ): Promise<Content | undefined> {
       const params = {
         TableName: 'Items',
         Key: {
           id: id,
         },
-        UpdateExpression: 'SET title = :t, description = :d',
+        UpdateExpression: 'SET title = :t, description = :d, category = :c',
         ExpressionAttributeValues: {
           ':t': title,
           ':d': description,
+          ':c': category,
         },
         ReturnValues: 'ALL_NEW',
       };
