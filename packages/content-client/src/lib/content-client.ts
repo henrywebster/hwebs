@@ -37,19 +37,15 @@ const sqliteClient = (db: Database): Client => {
   const get_query =
     'SELECT rowid AS id, title, description, category FROM items WHERE rowid=?';
   return {
-    async get(id: string): Promise<Content | undefined> {
+    async get(id: string) {
       return db.prepare(get_query).get(id);
     },
-    async list(): Promise<Array<Content>> {
+    async list() {
       return db
         .prepare('SELECT rowid AS id, title, description FROM items')
         .all();
     },
-    async create(
-      title: string,
-      description: string,
-      category: string
-    ): Promise<Content> {
+    async create(title: string, description: string, category: string) {
       const info = db
         .prepare(
           'INSERT INTO items (title, description, category) VALUES (?, ?, ?)'
@@ -62,7 +58,7 @@ const sqliteClient = (db: Database): Client => {
       title: string,
       description: string,
       category: string
-    ): Promise<Content | undefined> {
+    ) {
       // TODO make non-destructive
       // TODO no check if it doesn't exist
       db.prepare(
@@ -70,7 +66,7 @@ const sqliteClient = (db: Database): Client => {
       ).run(title, description, category, id);
       return db.prepare(get_query).get(id);
     },
-    async remove(id: string): Promise<string> {
+    async remove(id: string) {
       db.prepare('DELETE FROM items WHERE rowid=?').run(id);
       return id;
     },
@@ -85,7 +81,7 @@ const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
     category: record['category'],
   });
   return {
-    async get(id: string): Promise<Content | undefined> {
+    async get(id: string) {
       const params = {
         TableName: 'Items',
         Key: {
@@ -100,7 +96,7 @@ const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
           Item === undefined ? undefined : convertRecord(Item)
         );
     },
-    async list(): Promise<Array<Content>> {
+    async list() {
       const params = {
         TableName: 'Items',
       };
@@ -110,11 +106,7 @@ const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
           Items === undefined ? [] : Items.map(convertRecord)
         );
     },
-    async create(
-      title: string,
-      description: string,
-      category: string
-    ): Promise<Content> {
+    async create(title: string, description: string, category: string) {
       const params = {
         TableName: 'Items',
         Item: {
@@ -131,7 +123,7 @@ const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
       title: string,
       description: string,
       category: string
-    ): Promise<Content | undefined> {
+    ) {
       const params = {
         TableName: 'Items',
         Key: {
@@ -152,7 +144,7 @@ const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
           Attributes == undefined ? undefined : convertRecord(Attributes)
         );
     },
-    async remove(id: string): Promise<string> {
+    async remove(id: string) {
       const params = {
         TableName: 'Items',
         Key: {
