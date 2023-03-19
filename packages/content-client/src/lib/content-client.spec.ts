@@ -1,13 +1,19 @@
 /*eslint @typescript-eslint/no-unused-vars: ["error", { "ignoreRestSiblings": true }]*/
 
-import { sqliteClient, dynamodbClient } from './content-client';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  sqliteCategoryClient,
+  dynamodbCategoryClient,
+  sqlitePostClient,
+  dynamodbPostClient,
+} from './content-client';
 import Database = require('better-sqlite3');
 import {
   DynamoDBClient,
   CreateTableCommand,
   DeleteTableCommand,
 } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 
 const globalSqlite = new Database(':memory:');
 const globalDynamodb = new DynamoDBClient({
@@ -15,16 +21,35 @@ const globalDynamodb = new DynamoDBClient({
   endpoint: 'http://localhost:8000',
 });
 
+let defaultCategoryId = '';
+
 beforeEach(async () => {
   globalSqlite
     .prepare(
-      'CREATE TABLE items (title TEXT NOT NULL, description TEXT NOT NULL, category TEXT NOT NULL)'
+      'CREATE TABLE categories (id TEXT PRIMARY KEY, title TEXT NOT NULL)'
     )
     .run();
+  globalSqlite
+    .prepare(
+      'CREATE TABLE items (title TEXT NOT NULL, description TEXT NOT NULL, category TEXT NOT NULL, FOREIGN KEY(category) REFERENCES categories(id))'
+    )
+    .run();
+  defaultCategoryId = uuidv4();
+  globalSqlite
+    .prepare('INSERT INTO categories (id, title) VALUES (?, ?)')
+    .run(defaultCategoryId, 'default');
   const params = {
     AttributeDefinitions: [
       {
         AttributeName: 'id',
+        AttributeType: 'S',
+      },
+      {
+        AttributeName: 'type',
+        AttributeType: 'S',
+      },
+      {
+        AttributeName: 'category',
         AttributeType: 'S',
       },
     ],
@@ -33,80 +58,180 @@ beforeEach(async () => {
         AttributeName: 'id',
         KeyType: 'HASH',
       },
+      {
+        AttributeName: 'type',
+        KeyType: 'RANGE',
+      },
     ],
     ProvisionedThroughput: {
       ReadCapacityUnits: 1,
       WriteCapacityUnits: 1,
     },
     TableName: 'Items',
+    GlobalSecondaryIndexes: [
+      {
+        // TODO parameterize name
+        IndexName: 'post-index',
+        KeySchema: [
+          {
+            AttributeName: 'category',
+            KeyType: 'HASH',
+          },
+          {
+            AttributeName: 'id',
+            KeyType: 'RANGE',
+          },
+        ],
+        Projection: {
+          ProjectionType: 'ALL',
+        },
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1,
+        },
+      },
+    ],
   };
 
+  const putParams = {
+    TableName: 'Items',
+    Item: {
+      id: defaultCategoryId,
+      title: 'deault',
+      type: 'category',
+    },
+  };
   await globalDynamodb.send(new CreateTableCommand(params));
+  await DynamoDBDocumentClient.from(globalDynamodb).send(
+    new PutCommand(putParams)
+  );
 });
 
 afterEach(async () => {
   globalSqlite.prepare('DROP TABLE items').run();
+  globalSqlite.prepare('DROP TABLE categories').run();
+  defaultCategoryId = '';
   await globalDynamodb.send(new DeleteTableCommand({ TableName: 'Items' }));
 });
 
 describe.each([
-  { name: 'sqlite', client: sqliteClient(globalSqlite) },
+  { name: 'sqlite', client: sqlitePostClient(globalSqlite) },
   {
     name: 'dynamodb',
-    client: dynamodbClient(DynamoDBDocumentClient.from(globalDynamodb)),
+    client: dynamodbPostClient(DynamoDBDocumentClient.from(globalDynamodb)),
   },
 ])('Content Client: $name', ({ client }) => {
   it('should return undefined when key is not preset', () =>
     client.get('abc').then((content) => expect(content).toEqual(undefined)));
 
-  it('should create the data', () =>
+  it('should create the post', () =>
     client
-      .create('My data', 'this is my data', 'data')
-      .then(({ id, ...content }) =>
-        expect(content).toEqual({
-          title: 'My data',
-          description: 'this is my data',
-          category: 'data',
+      .create('My post', 'this is my post', defaultCategoryId)
+      .then(({ id, ...post }) =>
+        expect(post).toEqual({
+          title: 'My post',
+          description: 'this is my post',
+          category: defaultCategoryId,
         })
       ));
 
-  it('should get the data', () =>
-    client.create('My data', 'this is my data', 'data').then((content) =>
-      client.get(content.id).then(({ id, ...content }) =>
-        expect(content).toEqual({
-          title: 'My data',
-          description: 'this is my data',
-          category: 'data',
-        })
-      )
-    ));
+  it('should not create the post when category is absent', async () =>
+    await expect(() =>
+      client.create('My post', 'this is my post', '-1')
+    ).rejects.toThrow(Error));
+
+  it('should get the post', () =>
+    client
+      .create('My post', 'this is my post', defaultCategoryId)
+      .then((post) =>
+        client.get(post.id).then(({ id, ...post }) =>
+          expect(post).toEqual({
+            title: 'My post',
+            description: 'this is my post',
+            category: defaultCategoryId,
+          })
+        )
+      ));
   it('should update the data', () =>
-    client.create('My data', 'this is my data', 'data').then((content) =>
+    client
+      .create('My post', 'this is my post', defaultCategoryId)
+      .then((post) =>
+        client
+          .update(
+            post.id,
+            'My updated post',
+            'this is my new post',
+            defaultCategoryId
+          )
+          .then(({ id, ...post }) =>
+            expect(post).toEqual({
+              title: 'My updated post',
+              description: 'this is my new post',
+              category: defaultCategoryId,
+            })
+          )
+      ));
+  it('should delete the post', () =>
+    client
+      .create('My post', 'this is my post', defaultCategoryId)
+      .then((post) =>
+        client
+          .remove(post.id)
+          .then((id) =>
+            client.get(id).then((post) => expect(post).toEqual(undefined))
+          )
+      ));
+  it('should get all posts', () =>
+    Promise.all([
+      client.create('My post A', 'this is post A', defaultCategoryId),
+      client.create('My post B', 'this is post B', defaultCategoryId),
+    ]).then(() =>
+      client.list().then((posts) => expect(posts.length).toEqual(2))
+    ));
+});
+
+describe.each([
+  { name: 'sqlite', client: sqliteCategoryClient(globalSqlite) },
+  {
+    name: 'dynamodb',
+    client: dynamodbCategoryClient(DynamoDBDocumentClient.from(globalDynamodb)),
+  },
+])('Category Client: $name', ({ client }) => {
+  it('should return undefined when key is not preset', () =>
+    client.get('abc').then((category) => expect(category).toEqual(undefined)));
+  it('should create the category', () =>
+    client.create('My category').then(({ id, ...category }) =>
+      expect(category).toEqual({
+        title: 'My category',
+      })
+    ));
+  it('should update the category', () =>
+    client.create('My category').then((category) =>
       client
-        .update(content.id, 'My updated data', 'this is my new data', 'sports')
-        .then(({ id, ...content }) =>
-          expect(content).toEqual({
-            title: 'My updated data',
-            description: 'this is my new data',
-            category: 'sports',
+        .update(category.id, 'My updated category')
+        .then(({ id, ...category }) =>
+          expect(category).toEqual({
+            title: 'My updated category',
           })
         )
     ));
-  it('should delete the data', () =>
+  it('should delete the category', () =>
     client
-      .create('My data', 'this is my data', 'data')
-      .then((content) =>
+      .create('My category')
+      .then((category) =>
         client
-          .remove(content.id)
+          .remove(category.id)
           .then((id) =>
-            client.get(id).then((content) => expect(content).toEqual(undefined))
+            client
+              .get(id)
+              .then((category) => expect(category).toEqual(undefined))
           )
       ));
-  it('should get all data', () =>
+  it('should get all categories', () =>
     Promise.all([
-      client.create('My data A', 'this is data A', 'data'),
-      client.create('My data B', 'this is data B', 'data'),
+      client.create('My category A'),
+      client.create('My category B'),
     ]).then(() =>
-      client.list().then((contents) => expect(contents.length).toEqual(2))
+      client.list().then((categories) => expect(categories.length).toEqual(3))
     ));
 });

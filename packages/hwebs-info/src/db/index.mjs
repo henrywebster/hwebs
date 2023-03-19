@@ -9,25 +9,29 @@ import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 
 // TODO Define creation with client
 // TODO Create different project for dynamodb so it can be shared
-const data = [
-  { title: 'Code', description: 'This is my code', category: 'home' },
-  { title: 'Games', description: 'These are my games', category: 'home' },
-  { title: 'Music', description: 'This is my music', category: 'home' },
-  { title: 'Animation', description: 'This is my animation', category: 'home' },
-  { title: 'About', description: 'This is me', category: 'home' },
+const categories = [
+  { title: 'Code' },
+  { title: 'Games' },
+  { title: 'Music' },
+  { title: 'Animation' },
+  { title: 'About' },
 ];
 
 if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
   const db = new Database('packages/hwebs-info/src/db/test.db');
   db.prepare('DROP TABLE IF EXISTS items').run();
+  db.prepare('DROP TABLE IF EXISTS categories').run();
   db.prepare(
-    'CREATE TABLE items (title TEXT NOT NULL, description TEXT NOT NULL, category TEXT NOT NULL)'
+    'CREATE TABLE categories (id TEXT PRIMARY KEY, title TEXT NOT NULL)'
+  ).run();
+  db.prepare(
+    'CREATE TABLE items (title TEXT NOT NULL, description TEXT NOT NULL, category TEXT NOT NULL, FOREIGN KEY(category) REFERENCES categories(id))'
   ).run();
 
-  const insertData = db.prepare(
-    'INSERT INTO items (title, description, category) VALUES (@title, @description, @category)'
+  const insertCategory = db.prepare(
+    'INSERT INTO categories (title) VALUES (@title)'
   );
-  data.map((item) => insertData.run(item));
+  categories.map((item) => insertCategory.run(item));
 } else if (process.env.HWEBS_INFO_CLIENT === 'dynamodb') {
   // TODO add .env
   const dynamodb = new DynamoDBClient({

@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Section from '../components/Section.astro';
 import { client } from '../lib/client.ts';
 
-const posts = await client.list();
+const categories = await client.categories.list();
 ---
 <!-- TODO make section in DB -->
 <Layout title="Home | Henry J. Webster">
@@ -17,10 +17,10 @@ const posts = await client.list();
 		</p>
 		<ul role="list" class="link-card-grid">
 			{
-				posts.map((post) => (
+				categories.map((category) => (
 
 			<Section
-				title={post.title}
+				title={category.title}
 			/>))
 			}
 		</ul>
