@@ -23,6 +23,7 @@ const globalDynamodb = new DynamoDBClient({
 
 let defaultCategoryId = '';
 let secondaryCategoryId = '';
+const time = Date.now();
 
 beforeEach(async () => {
   globalSqlite
@@ -32,7 +33,7 @@ beforeEach(async () => {
     .run();
   globalSqlite
     .prepare(
-      'CREATE TABLE items (title TEXT NOT NULL, link TEXT NOT NULL, category TEXT NOT NULL, FOREIGN KEY(category) REFERENCES categories(id))'
+      'CREATE TABLE items (title TEXT NOT NULL, link TEXT NOT NULL, category TEXT NOT NULL, datetime INTEGER NOT NULL, FOREIGN KEY(category) REFERENCES categories(id))'
     )
     .run();
   defaultCategoryId = uuidv4();
@@ -144,12 +145,13 @@ describe.each([
 
   it('should create the post', () =>
     client
-      .create('My post', 'this is my post', defaultCategoryId)
+      .create('My post', 'this is my post', defaultCategoryId, time)
       .then(({ id, ...post }) =>
         expect(post).toEqual({
           title: 'My post',
           link: 'this is my post',
           category: defaultCategoryId,
+          datetime: time,
         })
       ));
 
@@ -160,38 +162,41 @@ describe.each([
 
   it('should get the post', () =>
     client
-      .create('My post', 'this is my post', defaultCategoryId)
+      .create('My post', 'this is my post', defaultCategoryId, time)
       .then((post) =>
         client.get(post.id).then(({ id, ...post }) =>
           expect(post).toEqual({
             title: 'My post',
             link: 'this is my post',
             category: defaultCategoryId,
+            datetime: time,
           })
         )
       ));
   it('should update the data', () =>
     client
-      .create('My post', 'this is my post', defaultCategoryId)
+      .create('My post', 'this is my post', defaultCategoryId, time)
       .then((post) =>
         client
           .update(
             post.id,
             'My updated post',
             'this is my new post',
-            defaultCategoryId
+            defaultCategoryId,
+            time
           )
           .then(({ id, ...post }) =>
             expect(post).toEqual({
               title: 'My updated post',
               link: 'this is my new post',
               category: defaultCategoryId,
+              datetime: time,
             })
           )
       ));
   it('should delete the post', () =>
     client
-      .create('My post', 'this is my post', defaultCategoryId)
+      .create('My post', 'this is my post', defaultCategoryId, time)
       .then((post) =>
         client
           .remove(post.id)
@@ -201,15 +206,15 @@ describe.each([
       ));
   it('should get all posts', () =>
     Promise.all([
-      client.create('My post A', 'this is post A', defaultCategoryId),
-      client.create('My post B', 'this is post B', defaultCategoryId),
+      client.create('My post A', 'this is post A', defaultCategoryId, time),
+      client.create('My post B', 'this is post B', defaultCategoryId, time),
     ]).then(() =>
       client.list().then((posts) => expect(posts.length).toEqual(2))
     ));
   it('should get only posts belonging to category', () =>
     Promise.all([
-      client.create('My post A', 'this is post A', defaultCategoryId),
-      client.create('My post B', 'this is post B', secondaryCategoryId),
+      client.create('My post A', 'this is post A', defaultCategoryId, time),
+      client.create('My post B', 'this is post B', secondaryCategoryId, time),
     ]).then(() =>
       client
         .list(secondaryCategoryId)
