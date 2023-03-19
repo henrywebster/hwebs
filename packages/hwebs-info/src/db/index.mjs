@@ -45,11 +45,23 @@ if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
         AttributeName: 'id',
         AttributeType: 'S',
       },
+      {
+        AttributeName: 'type',
+        AttributeType: 'S',
+      },
+      {
+        AttributeName: 'category',
+        AttributeType: 'S',
+      },
     ],
     KeySchema: [
       {
         AttributeName: 'id',
         KeyType: 'HASH',
+      },
+      {
+        AttributeName: 'type',
+        KeyType: 'RANGE',
       },
     ],
     ProvisionedThroughput: {
@@ -57,6 +69,29 @@ if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
       WriteCapacityUnits: 1,
     },
     TableName: 'Items',
+    GlobalSecondaryIndexes: [
+      {
+        // TODO parameterize name
+        IndexName: 'post-index',
+        KeySchema: [
+          {
+            AttributeName: 'category',
+            KeyType: 'HASH',
+          },
+          {
+            AttributeName: 'id',
+            KeyType: 'RANGE',
+          },
+        ],
+        Projection: {
+          ProjectionType: 'ALL',
+        },
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1,
+        },
+      },
+    ],
   };
 
   const client = DynamoDBDocumentClient.from(dynamodb);
@@ -72,11 +107,11 @@ if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
     .then((response) => dynamodb.send(new CreateTableCommand(params)))
     .then((response) =>
       Promise.all(
-        data.map((item) =>
+        categories.map((item) =>
           client.send(
             new PutCommand({
               TableName: 'Items',
-              Item: { id: uuidv4(), ...item },
+              Item: { id: uuidv4(), type: 'category', ...item },
             })
           )
         )
