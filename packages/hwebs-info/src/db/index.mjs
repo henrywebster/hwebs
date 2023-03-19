@@ -10,11 +10,19 @@ import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 // TODO Define creation with client
 // TODO Create different project for dynamodb so it can be shared
 const categories = [
-  { title: 'Code' },
-  { title: 'Games' },
-  { title: 'Music' },
-  { title: 'Animation' },
-  { title: 'About' },
+  { id: uuidv4(), title: 'Code' },
+  { id: uuidv4(), title: 'Games' },
+  { id: uuidv4(), title: 'Music' },
+  { id: uuidv4(), title: 'Animation' },
+  { id: uuidv4(), title: 'About' },
+];
+
+const posts = [
+  {
+    title: 'death ray of peace - Urbane Living',
+    description: '',
+    category: categories[2].id,
+  },
 ];
 
 if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
@@ -29,9 +37,13 @@ if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
   ).run();
 
   const insertCategory = db.prepare(
-    'INSERT INTO categories (title) VALUES (@title)'
+    'INSERT INTO categories (id, title) VALUES (@id, @title)'
   );
-  categories.map((item) => insertCategory.run(item));
+  const insertPost = db.prepare(
+    'INSERT INTO items (title, description, category) VALUES (@title, @description, @category)'
+  );
+  categories.map((category) => insertCategory.run(category));
+  posts.map((post) => insertPost.run(post));
 } else if (process.env.HWEBS_INFO_CLIENT === 'dynamodb') {
   // TODO add .env
   const dynamodb = new DynamoDBClient({

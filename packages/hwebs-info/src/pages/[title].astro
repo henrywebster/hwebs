@@ -1,21 +1,27 @@
 ---
 import { client } from '../lib/client.ts';
 import Layout from '../layouts/Layout.astro';
-
+import Section from '../components/Section.astro';
 
 export async function getStaticPaths() {
-const categories = await client.categories.list();
-const result = categories.map((category) => {
-return {
-params:{title:  category.title },
-	props: { category },
-};
-});
-return result;
+
+const result = await client.categories.list().then((categories) => {
+	return categories.map(async (category) => {
+	return {
+		params: {title: category.title},
+		props: { category, posts: await client.posts.list(category.id)}
+		}
+		});
+		});
+	
+		//		const hello = await Promise.all(result);
+		//	console.log(hello[2].props.posts);
+		//console.log(hello);
+return await Promise.all(result);
 }
 
 const { title } = Astro.params;
-const { category } = Astro.props
+const { category, posts } = Astro.props
 ---
 <Layout title={title}>
 	<main>
@@ -23,6 +29,16 @@ const { category } = Astro.props
 			<h1>{title}</h1>
 			<a href="/hwebs/">Home</a>
 		</section>
+		<ul role="list" class="link-card-grid">
+			{
+				posts.map((post) => (
+			<Section
+				title={post.title}
+				href={post.id}
+			/>))
+			}
+		</ul>
+		
 	</main>
 </Layout>
 
@@ -48,5 +64,10 @@ const { category } = Astro.props
 	}
 	a,a:visited {
 		color: blue;
+	}
+	.link-card-grid {
+		display: grid;
+		gap: .5rem;
+		padding: 0;
 	}
 </style>

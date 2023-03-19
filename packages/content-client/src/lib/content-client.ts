@@ -32,7 +32,7 @@ interface CategoryClient {
 
 interface PostClient {
   get(id: string): Promise<Content | undefined>;
-  list(): Promise<Content[]>;
+  list(category?: string): Promise<Content[]>;
   create(
     title: string,
     description: string,
@@ -87,10 +87,18 @@ const sqlitePostClient = (db: Database): PostClient => {
     async get(id) {
       return db.prepare(get_query).get(id);
     },
-    async list() {
+    async list(category) {
+      // TODO this could be better
+      if (category === undefined) {
+        return db
+          .prepare('SELECT rowid AS id, title, description FROM items')
+          .all();
+      }
       return db
-        .prepare('SELECT rowid AS id, title, description FROM items')
-        .all();
+        .prepare(
+          'SELECT rowid AS id, title, description FROM items WHERE category=?'
+        )
+        .all(category);
     },
     async create(title, description, category) {
       try {
@@ -241,18 +249,34 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
           Item === undefined ? undefined : convertRecord(Item)
         );
     },
-    async list() {
-      const params = {
-        TableName: 'Items',
-        IndexName: 'post-index',
-        FilterExpression: '#type = :t',
-        ExpressionAttributeValues: {
-          ':t': 'post',
-        },
-        ExpressionAttributeNames: {
-          '#type': 'type',
-        },
-      };
+    async list(category) {
+      // TODO could be better
+
+      const params =
+        category === undefined
+          ? {
+              TableName: 'Items',
+              IndexName: 'post-index',
+              FilterExpression: '#type = :t',
+              ExpressionAttributeValues: {
+                ':t': 'post',
+              },
+              ExpressionAttributeNames: {
+                '#type': 'type',
+              },
+            }
+          : {
+              TableName: 'Items',
+              IndexName: 'post-index',
+              FilterExpression: '#type = :t and category = :c',
+              ExpressionAttributeValues: {
+                ':t': 'post',
+                ':c': category,
+              },
+              ExpressionAttributeNames: {
+                '#type': 'type',
+              },
+            };
       return client
         .send(new ScanCommand(params))
         .then(({ Items }) =>

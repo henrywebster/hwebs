@@ -22,6 +22,7 @@ const globalDynamodb = new DynamoDBClient({
 });
 
 let defaultCategoryId = '';
+let secondaryCategoryId = '';
 
 beforeEach(async () => {
   globalSqlite
@@ -35,9 +36,13 @@ beforeEach(async () => {
     )
     .run();
   defaultCategoryId = uuidv4();
+  secondaryCategoryId = uuidv4();
   globalSqlite
     .prepare('INSERT INTO categories (id, title) VALUES (?, ?)')
     .run(defaultCategoryId, 'default');
+  globalSqlite
+    .prepare('INSERT INTO categories (id, title) VALUES (?, ?)')
+    .run(secondaryCategoryId, 'other');
   const params = {
     AttributeDefinitions: [
       {
@@ -97,13 +102,25 @@ beforeEach(async () => {
     TableName: 'Items',
     Item: {
       id: defaultCategoryId,
-      title: 'deault',
+      title: 'default',
       type: 'category',
     },
   };
+  const otherParams = {
+    TableName: 'Items',
+    Item: {
+      id: secondaryCategoryId,
+      title: 'other',
+      type: 'category',
+    },
+  };
+  // TODO make one promise
   await globalDynamodb.send(new CreateTableCommand(params));
   await DynamoDBDocumentClient.from(globalDynamodb).send(
     new PutCommand(putParams)
+  );
+  await DynamoDBDocumentClient.from(globalDynamodb).send(
+    new PutCommand(otherParams)
   );
 });
 
@@ -111,6 +128,7 @@ afterEach(async () => {
   globalSqlite.prepare('DROP TABLE items').run();
   globalSqlite.prepare('DROP TABLE categories').run();
   defaultCategoryId = '';
+  secondaryCategoryId = '';
   await globalDynamodb.send(new DeleteTableCommand({ TableName: 'Items' }));
 });
 
@@ -188,6 +206,15 @@ describe.each([
     ]).then(() =>
       client.list().then((posts) => expect(posts.length).toEqual(2))
     ));
+  it('should get only posts belonging to category', () =>
+    Promise.all([
+      client.create('My post A', 'this is post A', defaultCategoryId),
+      client.create('My post B', 'this is post B', secondaryCategoryId),
+    ]).then(() =>
+      client
+        .list(secondaryCategoryId)
+        .then((posts) => expect(posts.length).toEqual(1))
+    ));
 });
 
 describe.each([
@@ -232,6 +259,6 @@ describe.each([
       client.create('My category A'),
       client.create('My category B'),
     ]).then(() =>
-      client.list().then((categories) => expect(categories.length).toEqual(3))
+      client.list().then((categories) => expect(categories.length).toEqual(4))
     ));
 });
