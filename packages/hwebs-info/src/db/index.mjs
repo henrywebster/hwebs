@@ -22,7 +22,13 @@ const posts = [
     title: 'death ray of peace - Urbane Living',
     link: 'https://deathrayop.bandcamp.com/album/urbane-living',
     category: categories[2].id,
-	datetime: Date.now(),
+    datetime: 1534996800000,
+  },
+  {
+    title: 'death ray of peace - music for strangers',
+    link: 'https://deathrayop.bandcamp.com/album/music-for-strangers',
+    category: categories[2].id,
+    datetime: 1450846800000,
   },
 ];
 

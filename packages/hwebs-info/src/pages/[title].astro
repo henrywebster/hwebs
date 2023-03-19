@@ -19,6 +19,18 @@ return await Promise.all(result);
 
 const { title } = Astro.params;
 const { category, posts } = Astro.props
+
+const postsByYear = Array.from(posts.reduce((accumulator, current) => {
+const year = new Date(current.datetime).getFullYear();
+	if (accumulator.has(year)) {
+		const arr = accumulator.get(year);
+		arr.push(current);
+	} else {
+		accumulator.set(year, [current]);
+		}
+		return accumulator;
+		}, new Map()));
+
 ---
 <Layout title={title}>
 	<main>
@@ -26,15 +38,17 @@ const { category, posts } = Astro.props
 			<h1>{title}</h1>
 			<a href="/hwebs/">Home</a>
 		</section>
+		{
+		postsByYear.map(([year, yposts]) =>( <h2>{year}</h2>
 		<ul role="list" class="link-card-grid">
 			{
-				posts.map((post) => (
+				yposts.map((post) => (
 			<Section
 				title={post.title}
 				href={post.link}
 			/>))
 			}
-		</ul>
+		</ul>))
 		
 	</main>
 </Layout>
