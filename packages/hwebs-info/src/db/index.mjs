@@ -20,7 +20,7 @@ const categories = [
 const posts = [
   {
     title: 'death ray of peace - Urbane Living',
-    description: '',
+    link: 'https://deathrayop.bandcamp.com/album/urbane-living',
     category: categories[2].id,
   },
 ];
@@ -33,14 +33,14 @@ if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
     'CREATE TABLE categories (id TEXT PRIMARY KEY, title TEXT NOT NULL)'
   ).run();
   db.prepare(
-    'CREATE TABLE items (title TEXT NOT NULL, description TEXT NOT NULL, category TEXT NOT NULL, FOREIGN KEY(category) REFERENCES categories(id))'
+    'CREATE TABLE items (title TEXT NOT NULL, link TEXT NOT NULL, category TEXT NOT NULL, FOREIGN KEY(category) REFERENCES categories(id))'
   ).run();
 
   const insertCategory = db.prepare(
     'INSERT INTO categories (id, title) VALUES (@id, @title)'
   );
   const insertPost = db.prepare(
-    'INSERT INTO items (title, description, category) VALUES (@title, @description, @category)'
+    'INSERT INTO items (title, link, category) VALUES (@title, @link, @category)'
   );
   categories.map((category) => insertCategory.run(category));
   posts.map((post) => insertPost.run(post));

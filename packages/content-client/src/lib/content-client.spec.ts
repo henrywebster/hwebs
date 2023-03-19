@@ -32,7 +32,7 @@ beforeEach(async () => {
     .run();
   globalSqlite
     .prepare(
-      'CREATE TABLE items (title TEXT NOT NULL, description TEXT NOT NULL, category TEXT NOT NULL, FOREIGN KEY(category) REFERENCES categories(id))'
+      'CREATE TABLE items (title TEXT NOT NULL, link TEXT NOT NULL, category TEXT NOT NULL, FOREIGN KEY(category) REFERENCES categories(id))'
     )
     .run();
   defaultCategoryId = uuidv4();
@@ -148,7 +148,7 @@ describe.each([
       .then(({ id, ...post }) =>
         expect(post).toEqual({
           title: 'My post',
-          description: 'this is my post',
+          link: 'this is my post',
           category: defaultCategoryId,
         })
       ));
@@ -165,7 +165,7 @@ describe.each([
         client.get(post.id).then(({ id, ...post }) =>
           expect(post).toEqual({
             title: 'My post',
-            description: 'this is my post',
+            link: 'this is my post',
             category: defaultCategoryId,
           })
         )
@@ -184,7 +184,7 @@ describe.each([
           .then(({ id, ...post }) =>
             expect(post).toEqual({
               title: 'My updated post',
-              description: 'this is my new post',
+              link: 'this is my new post',
               category: defaultCategoryId,
             })
           )

@@ -14,9 +14,6 @@ const result = await client.categories.list().then((categories) => {
 		});
 		});
 	
-		//		const hello = await Promise.all(result);
-		//	console.log(hello[2].props.posts);
-		//console.log(hello);
 return await Promise.all(result);
 }
 
@@ -34,7 +31,7 @@ const { category, posts } = Astro.props
 				posts.map((post) => (
 			<Section
 				title={post.title}
-				href={post.id}
+				href={post.link}
 			/>))
 			}
 		</ul>

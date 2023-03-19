@@ -13,7 +13,7 @@ import {
 interface Content {
   readonly id: string;
   readonly title: string;
-  readonly description: string;
+  readonly link: string;
   readonly category: string;
 }
 
@@ -33,15 +33,11 @@ interface CategoryClient {
 interface PostClient {
   get(id: string): Promise<Content | undefined>;
   list(category?: string): Promise<Content[]>;
-  create(
-    title: string,
-    description: string,
-    category: string
-  ): Promise<Content>;
+  create(title: string, link: string, category: string): Promise<Content>;
   update(
     id: string,
     title: string,
-    description: string,
+    link: string,
     category: string
   ): Promise<Content | undefined>;
   remove(id: string): Promise<string>;
@@ -82,7 +78,7 @@ const sqliteCategoryClient = (db: Database): CategoryClient => {
 
 const sqlitePostClient = (db: Database): PostClient => {
   const get_query =
-    'SELECT rowid AS id, title, description, category FROM items WHERE rowid=?';
+    'SELECT rowid AS id, title, link, category FROM items WHERE rowid=?';
   return {
     async get(id) {
       return db.prepare(get_query).get(id);
@@ -90,35 +86,29 @@ const sqlitePostClient = (db: Database): PostClient => {
     async list(category) {
       // TODO this could be better
       if (category === undefined) {
-        return db
-          .prepare('SELECT rowid AS id, title, description FROM items')
-          .all();
+        return db.prepare('SELECT rowid AS id, title, link FROM items').all();
       }
       return db
-        .prepare(
-          'SELECT rowid AS id, title, description FROM items WHERE category=?'
-        )
+        .prepare('SELECT rowid AS id, title, link FROM items WHERE category=?')
         .all(category);
     },
-    async create(title, description, category) {
+    async create(title, link, category) {
       try {
         const info = db
-          .prepare(
-            'INSERT INTO items (title, description, category) VALUES (?, ?, ?)'
-          )
-          .run(title, description, category);
+          .prepare('INSERT INTO items (title, link, category) VALUES (?, ?, ?)')
+          .run(title, link, category);
         return db.prepare(get_query).get(info.lastInsertRowid);
       } catch (err: unknown) {
         // TODO improve error game
         throw new Error('Could not insert');
       }
     },
-    async update(id, title, description, category) {
+    async update(id, title, link, category) {
       // TODO make non-destructive
       // TODO no check if it doesn't exist
       db.prepare(
-        'UPDATE items SET title=?, description=?, category=? WHERE rowid=?'
-      ).run(title, description, category, id);
+        'UPDATE items SET title=?, link=?, category=? WHERE rowid=?'
+      ).run(title, link, category, id);
       return db.prepare(get_query).get(id);
     },
     async remove(id) {
@@ -229,7 +219,7 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
   const convertRecord = (record: Record<string, any>) => ({
     id: record['id'],
     title: record['title'],
-    description: record['description'],
+    link: record['link'],
     category: record['category'],
   });
   return {
@@ -283,7 +273,7 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
           Items === undefined ? [] : Items.map(convertRecord)
         );
     },
-    async create(title, description, category) {
+    async create(title, link, category) {
       const getParams = {
         TableName: 'Items',
         Key: {
@@ -299,7 +289,7 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
           id: uuidv4(),
           type: 'post',
           title: title,
-          description: description,
+          link: link,
           category: category,
         },
       };
@@ -313,17 +303,17 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
         return client.send(new PutCommand(params)).then(() => post);
       });
     },
-    async update(id, title, description, category) {
+    async update(id, title, link, category) {
       const params = {
         TableName: 'Items',
         Key: {
           id: id,
           type: 'post',
         },
-        UpdateExpression: 'SET title = :t, description = :d, category = :c',
+        UpdateExpression: 'SET title = :t, link = :l, category = :c',
         ExpressionAttributeValues: {
           ':t': title,
-          ':d': description,
+          ':l': link,
           ':c': category,
         },
         ReturnValues: 'ALL_NEW',
