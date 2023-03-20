@@ -372,4 +372,5 @@ export {
   dynamodbClient,
   sqliteCategoryClient,
   dynamodbCategoryClient,
+  Content,
 };
