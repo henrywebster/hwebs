@@ -6,6 +6,7 @@ import {
   DeleteTableCommand,
 } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+import dynamodbConfig from '../../dynamodb-table-defintiion.json' assert { type: 'json' };
 
 // TODO Define creation with client
 // TODO Create different project for dynamodb so it can be shared
@@ -58,79 +59,33 @@ if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
     endpoint: 'http://localhost:8000',
   });
 
-  const params = {
-    AttributeDefinitions: [
-      {
-        AttributeName: 'id',
-        AttributeType: 'S',
-      },
-      {
-        AttributeName: 'type',
-        AttributeType: 'S',
-      },
-      {
-        AttributeName: 'category',
-        AttributeType: 'S',
-      },
-    ],
-    KeySchema: [
-      {
-        AttributeName: 'id',
-        KeyType: 'HASH',
-      },
-      {
-        AttributeName: 'type',
-        KeyType: 'RANGE',
-      },
-    ],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 1,
-      WriteCapacityUnits: 1,
-    },
-    TableName: 'Items',
-    GlobalSecondaryIndexes: [
-      {
-        // TODO parameterize name
-        IndexName: 'post-index',
-        KeySchema: [
-          {
-            AttributeName: 'category',
-            KeyType: 'HASH',
-          },
-          {
-            AttributeName: 'id',
-            KeyType: 'RANGE',
-          },
-        ],
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        ProvisionedThroughput: {
-          ReadCapacityUnits: 1,
-          WriteCapacityUnits: 1,
-        },
-      },
-    ],
-  };
-
   const client = DynamoDBDocumentClient.from(dynamodb);
 
-  // TODO check if exists first?
-  // add await bs
-
   await dynamodb
-    .send(new DeleteTableCommand({ TableName: 'Items' }))
+    .send(new DeleteTableCommand({ TableName: dynamodbConfig.TableName }))
     .catch((error) => {
       return;
     })
-    .then((response) => dynamodb.send(new CreateTableCommand(params)))
+    .then((response) => dynamodb.send(new CreateTableCommand(dynamodbConfig)))
     .then((response) =>
       Promise.all(
-        categories.map((item) =>
+        categories.map((category) =>
           client.send(
             new PutCommand({
               TableName: 'Items',
-              Item: { id: uuidv4(), type: 'category', ...item },
+              Item: { type: 'category', ...category },
+            })
+          )
+        )
+      )
+    )
+    .then((response) =>
+      Promise.all(
+        posts.map((post) =>
+          client.send(
+            new PutCommand({
+              TableName: 'Items',
+              Item: { type: 'post', id: uuidv4(), ...post },
             })
           )
         )

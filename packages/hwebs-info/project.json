@@ -29,11 +29,18 @@
     "sync": {
       "executor": "@nxtensions/astro:sync"
     },
+    "dynamodb": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "sh ./packages/content-client/scripts/dynamodb/run.sh ./packages/content-client/scripts/dynamodb/docker-compose.yml"
+      }
+    },
     "seed": {
       "executor": "nx:run-commands",
       "options": {
         "command": "node ./packages/hwebs-info/src/db/index.mjs"
-      }
+      },
+      "dependsOn": ["dynamodb"]
     }
   },
   "tags": []
