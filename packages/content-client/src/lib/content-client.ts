@@ -1,6 +1,6 @@
 /*eslint @typescript-eslint/no-unused-vars: ["error", { "ignoreRestSiblings": true }]*/
 import { v4 as uuidv4 } from 'uuid';
-import { Database } from 'better-sqlite3';
+import * as Database from 'better-sqlite3';
 import {
   DynamoDBDocumentClient,
   PutCommand,
@@ -9,6 +9,7 @@ import {
   DeleteCommand,
   ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 interface Content {
   readonly id: string;
@@ -55,7 +56,7 @@ interface Client {
   categories: CategoryClient;
 }
 
-const sqliteCategoryClient = (db: Database): CategoryClient => {
+const sqliteCategoryClient = (db: Database.Database): CategoryClient => {
   const get_query = 'SELECT id, title FROM categories WHERE id=?';
   return {
     async get(id) {
@@ -83,7 +84,7 @@ const sqliteCategoryClient = (db: Database): CategoryClient => {
   };
 };
 
-const sqlitePostClient = (db: Database): PostClient => {
+const sqlitePostClient = (db: Database.Database): PostClient => {
   const get_query =
     'SELECT rowid AS id, title, link, category, datetime FROM items WHERE rowid=?';
   return {
@@ -131,7 +132,7 @@ const sqlitePostClient = (db: Database): PostClient => {
   };
 };
 
-const sqliteClient = (db: Database): Client => {
+const sqliteClient = (db: Database.Database): Client => {
   return {
     posts: sqlitePostClient(db),
     categories: sqliteCategoryClient(db),
@@ -365,6 +366,28 @@ const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
   };
 };
 
+interface clientConfig {
+  readonly client: string;
+  readonly dbfile?: string;
+}
+
+// TODO use enum?
+const contentClient = (config: clientConfig): Client | undefined => {
+  if (config.client === 'sqlite') {
+    return sqliteClient(new Database(config.dbfile || ':memory:'));
+  } else if (config.client === 'dynamodb') {
+    return dynamodbClient(
+      DynamoDBDocumentClient.from(
+        new DynamoDBClient({
+          region: 'us-east-1',
+          endpoint: 'http://localhost:8000',
+        })
+      )
+    );
+  }
+  return undefined;
+};
+
 export {
   dynamodbPostClient,
   sqlitePostClient,
@@ -373,4 +396,5 @@ export {
   sqliteCategoryClient,
   dynamodbCategoryClient,
   Content,
+  contentClient,
 };
