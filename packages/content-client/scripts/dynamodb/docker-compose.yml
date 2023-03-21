@@ -6,3 +6,15 @@ services:
     container_name: dynamodb-local
     ports:
       - '8000:8000'
+        #  dynamodb-setup:
+        #build:
+        #dockerfile: scripts/dynamodb/seeder.Dockerfile
+        #  context: '../../'
+
+    #image: "amazon/aws-cli:latest"
+    #depends_on:
+    #- dynamodb-local
+    #restart: "no"
+    #environment:
+    #  AWS_ACCESS_KEY_ID: 'DUMMYIDEXAMPLE'
+    #  AWS_SECRET_ACCESS_KEY: 'DUMMYEXAMPLEKEY'

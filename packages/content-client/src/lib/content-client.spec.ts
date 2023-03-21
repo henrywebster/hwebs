@@ -14,6 +14,7 @@ import {
   DeleteTableCommand,
 } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+import dynamodbConfig = require('../../dynamodb-table-definition.json');
 
 const globalSqlite = new Database(':memory:');
 const globalDynamodb = new DynamoDBClient({
@@ -44,60 +45,6 @@ beforeEach(async () => {
   globalSqlite
     .prepare('INSERT INTO categories (id, title) VALUES (?, ?)')
     .run(secondaryCategoryId, 'other');
-  const params = {
-    AttributeDefinitions: [
-      {
-        AttributeName: 'id',
-        AttributeType: 'S',
-      },
-      {
-        AttributeName: 'type',
-        AttributeType: 'S',
-      },
-      {
-        AttributeName: 'category',
-        AttributeType: 'S',
-      },
-    ],
-    KeySchema: [
-      {
-        AttributeName: 'id',
-        KeyType: 'HASH',
-      },
-      {
-        AttributeName: 'type',
-        KeyType: 'RANGE',
-      },
-    ],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 1,
-      WriteCapacityUnits: 1,
-    },
-    TableName: 'Items',
-    GlobalSecondaryIndexes: [
-      {
-        // TODO parameterize name
-        IndexName: 'post-index',
-        KeySchema: [
-          {
-            AttributeName: 'category',
-            KeyType: 'HASH',
-          },
-          {
-            AttributeName: 'id',
-            KeyType: 'RANGE',
-          },
-        ],
-        Projection: {
-          ProjectionType: 'ALL',
-        },
-        ProvisionedThroughput: {
-          ReadCapacityUnits: 1,
-          WriteCapacityUnits: 1,
-        },
-      },
-    ],
-  };
 
   const putParams = {
     TableName: 'Items',
@@ -116,7 +63,7 @@ beforeEach(async () => {
     },
   };
   // TODO make one promise
-  await globalDynamodb.send(new CreateTableCommand(params));
+  await globalDynamodb.send(new CreateTableCommand(dynamodbConfig));
   await DynamoDBDocumentClient.from(globalDynamodb).send(
     new PutCommand(putParams)
   );
@@ -130,7 +77,9 @@ afterEach(async () => {
   globalSqlite.prepare('DROP TABLE categories').run();
   defaultCategoryId = '';
   secondaryCategoryId = '';
-  await globalDynamodb.send(new DeleteTableCommand({ TableName: 'Items' }));
+  await globalDynamodb.send(
+    new DeleteTableCommand({ TableName: dynamodbConfig.TableName })
+  );
 });
 
 describe.each([
