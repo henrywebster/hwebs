@@ -3,9 +3,9 @@ services:
   dynamodb-local:
     command: '-jar DynamoDBLocal.jar -inMemory'
     image: 'amazon/dynamodb-local:latest'
-    container_name: dynamodb-local
+    container_name: ${HWEBS_DYNAMODB_CONTAINER_NAME}
     ports:
-      - '8000:8000'
+      - '${HWEBS_DYNAMODB_CONTAINER_PORT}:8000'
         #  dynamodb-setup:
         #build:
         #dockerfile: scripts/dynamodb/seeder.Dockerfile

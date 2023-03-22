@@ -369,6 +369,7 @@ const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
 interface clientConfig {
   readonly client: string;
   readonly dbfile?: string;
+  readonly port?: string;
 }
 
 // TODO use enum?
@@ -380,7 +381,7 @@ const contentClient = (config: clientConfig): Client | undefined => {
       DynamoDBDocumentClient.from(
         new DynamoDBClient({
           region: 'us-east-1',
-          endpoint: 'http://localhost:8000',
+          endpoint: `http://localhost:${config.port || 8000}`,
         })
       )
     );

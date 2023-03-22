@@ -32,7 +32,7 @@
     "dynamodb": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "sh ./packages/content-client/scripts/dynamodb/run.sh ./packages/content-client/scripts/dynamodb/docker-compose.yml"
+        "command": "HWEBS_DYNAMODB_CONTAINER_PORT=10001 HWEBS_DYNAMODB_CONTAINER_NAME=dynamodb-local-hwebs-info sh ./packages/content-client/scripts/dynamodb/run.sh ./packages/content-client/scripts/dynamodb/docker-compose.yml"
       }
     },
     "seed": {

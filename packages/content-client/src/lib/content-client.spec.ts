@@ -19,7 +19,9 @@ import dynamodbConfig = require('../../dynamodb-table-definition.json');
 const globalSqlite = new Database(':memory:');
 const globalDynamodb = new DynamoDBClient({
   region: 'us-east-1',
-  endpoint: 'http://localhost:8000',
+  endpoint: `http://localhost:${
+    process.env.HWEBS_CLIENT_DYNAMODB_PORT || 8000
+  }`,
 });
 
 let defaultCategoryId = '';

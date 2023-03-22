@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DOCKER_FILE=$1
-CONTAINER_NAME="dynamodb-local"
+CONTAINER_NAME=$HWEBS_DYNAMODB_CONTAINER_NAME
 
 # TODO detect if container exists but is not running
 

@@ -6,7 +6,7 @@ import {
   DeleteTableCommand,
 } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
-import dynamodbConfig from '../../dynamodb-table-defintiion.json' assert { type: 'json' };
+import dynamodbConfig from '../../dynamodb-table-definition.json' assert { type: 'json' };
 
 // TODO Define creation with client
 // TODO Create different project for dynamodb so it can be shared
@@ -56,7 +56,9 @@ if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
   // TODO add .env
   const dynamodb = new DynamoDBClient({
     region: 'us-east-1',
-    endpoint: 'http://localhost:8000',
+    endpoint: `http://localhost:${
+      process.env.HWEBS_INFO_DYNAMODB_PORT || 8000
+    }`,
   });
 
   const client = DynamoDBDocumentClient.from(dynamodb);
