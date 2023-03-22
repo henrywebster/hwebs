@@ -5,6 +5,8 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   HWEBS_INFO_CLIENT: sqlite
   HWEBS_INFO_SQLITE_DB_FILE: packages/hwebs-info/src/db/test.db
+  HWEBS_INFO_DYNAMODB_PORT: 10001
+  HWEBS_CLIENT_DYNAMODB_PORT: 10000
 
 on:
   # Trigger the workflow every time you push to the `main` branch
