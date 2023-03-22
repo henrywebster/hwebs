@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import BetterSqlite3 from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import {
   DynamoDBClient,
@@ -34,7 +34,7 @@ const posts = [
 ];
 
 if (process.env.HWEBS_INFO_CLIENT === 'sqlite') {
-  const db = new Database('packages/hwebs-info/src/db/test.db');
+  const db = new BetterSqlite3('packages/hwebs-info/src/db/test.db');
   db.prepare('DROP TABLE IF EXISTS items').run();
   db.prepare('DROP TABLE IF EXISTS categories').run();
   db.prepare(

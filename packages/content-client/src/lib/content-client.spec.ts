@@ -7,7 +7,7 @@ import {
   sqlitePostClient,
   dynamodbPostClient,
 } from './content-client';
-import Database = require('better-sqlite3');
+import BetterSqlite3 from 'better-sqlite3';
 import {
   DynamoDBClient,
   CreateTableCommand,
@@ -16,7 +16,7 @@ import {
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import dynamodbConfig = require('../../dynamodb-table-definition.json');
 
-const globalSqlite = new Database(':memory:');
+const globalSqlite = new BetterSqlite3(':memory:');
 const globalDynamodb = new DynamoDBClient({
   region: 'us-east-1',
   endpoint: 'http://localhost:8000',

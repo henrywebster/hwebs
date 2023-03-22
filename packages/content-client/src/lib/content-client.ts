@@ -1,6 +1,6 @@
 /*eslint @typescript-eslint/no-unused-vars: ["error", { "ignoreRestSiblings": true }]*/
 import { v4 as uuidv4 } from 'uuid';
-import * as Database from 'better-sqlite3';
+import BetterSqlite3 from 'better-sqlite3';
 import {
   DynamoDBDocumentClient,
   PutCommand,
@@ -56,7 +56,7 @@ interface Client {
   categories: CategoryClient;
 }
 
-const sqliteCategoryClient = (db: Database.Database): CategoryClient => {
+const sqliteCategoryClient = (db: BetterSqlite3.Database): CategoryClient => {
   const get_query = 'SELECT id, title FROM categories WHERE id=?';
   return {
     async get(id) {
@@ -84,7 +84,7 @@ const sqliteCategoryClient = (db: Database.Database): CategoryClient => {
   };
 };
 
-const sqlitePostClient = (db: Database.Database): PostClient => {
+const sqlitePostClient = (db: BetterSqlite3.Database): PostClient => {
   const get_query =
     'SELECT rowid AS id, title, link, category, datetime FROM items WHERE rowid=?';
   return {
@@ -132,7 +132,7 @@ const sqlitePostClient = (db: Database.Database): PostClient => {
   };
 };
 
-const sqliteClient = (db: Database.Database): Client => {
+const sqliteClient = (db: BetterSqlite3.Database): Client => {
   return {
     posts: sqlitePostClient(db),
     categories: sqliteCategoryClient(db),
@@ -374,7 +374,7 @@ interface clientConfig {
 // TODO use enum?
 const contentClient = (config: clientConfig): Client | undefined => {
   if (config.client === 'sqlite') {
-    return sqliteClient(new Database(config.dbfile || ':memory:'));
+    return sqliteClient(new BetterSqlite3(config.dbfile || ':memory:'));
   } else if (config.client === 'dynamodb') {
     return dynamodbClient(
       DynamoDBDocumentClient.from(
