@@ -64,11 +64,6 @@ jobs:
       - name: Apply Terraform
         run: terraform apply -auto-approve -input=false
 
-      - name: Seed DB
-        # TODO Have this run reliably from nx config itself
-        # run: npx nx affected --target=build --parallel=3
-        run: npx nx run hwebs-info:seed
-
       - name: Build
         # TODO figure out how to only build changed; next step fails if not built
         # run: npx nx affected --target=build --parallel=3
