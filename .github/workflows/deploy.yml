@@ -63,7 +63,7 @@ jobs:
         run: terraform validate -no-color
 
       - name: Apply Terraform
-        run: terraform apply -auth-approve -input=false
+        run: terraform apply -auto-approve -input=false
 
       - name: Seed DB
         # TODO Have this run reliably from nx config itself
