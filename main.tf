@@ -53,14 +53,36 @@ resource "aws_dynamodb_table" "hwebs_info_table" {
 	}
 }
 
-data "aws_iam_policy_document" "hwebs_info_dynamodb_ro_policy" {
+data "aws_iam_policy_document" "assume_role" {
 	statement {
-		actions = ["dynamodb:DescribeTable", "dynamodb:Query", "dynamodb:Scan", "dynamodb:GetItem"]
-		resources = [resource.aws_dynamodb_table.hwebs_info_table.arn]
+	principals {
+		type = "Service"
+		identifiers = ["dynamodb.amazonaws.com"]
+	}
+	actions = ["sts:AssumeRole"]
 	}
 }
 
 resource "aws_iam_role" "hwebs_info_dynamodb_ro_role" {
 	name = "hwebs-info-dynamodb-ro"
-	assume_role_policy = data.aws_iam_policy_document.hwebs_info_dynamodb_ro_policy.json
+	assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
+
+data "aws_iam_policy_document" "hwebs_info_dynamodb_ro_policy_document" {
+	statement {
+		actions = ["dynamodb:DescribeTable", "dynamodb:Query", "dynamodb:Scan", "dynamodb:GetItem"]
+		resources = [aws_dynamodb_table.hwebs_info_table.arn]
+	}
+}
+
+resource "aws_iam_policy" "hwebs_info_dynamodb_ro_policy" {
+	name = "hwebs-info-dynamodb-ro-policy"
+	description = "Read-only policy for the hwebs-info DynamoDB database"
+	policy = data.aws_iam_policy_document.hwebs_info_dynamodb_ro_policy_document.json
+}
+
+resource "aws_iam_role_policy_attachment" "hwebs_info_attachment" {
+	role = aws_iam_role.hwebs_info_dynamodb_ro_role.name
+	policy_arn = aws_iam_policy.hwebs_info_dynamodb_ro_policy.arn
+}
+
