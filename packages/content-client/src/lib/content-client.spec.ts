@@ -28,6 +28,7 @@ let defaultCategoryId = '';
 let secondaryCategoryId = '';
 const time = Date.now();
 const defaultTableName = 'Items';
+const defaultIndexName = 'post-index';
 
 beforeEach(async () => {
   globalSqlite
@@ -91,7 +92,8 @@ describe.each([
     name: 'dynamodb',
     client: dynamodbPostClient(
       DynamoDBDocumentClient.from(globalDynamodb),
-      defaultTableName
+      defaultTableName,
+      defaultIndexName
     ),
   },
 ])('Content Client: $name', ({ client }) => {

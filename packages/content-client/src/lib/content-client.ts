@@ -141,8 +141,7 @@ const sqliteClient = (db: BetterSqlite3.Database): Client => {
 
 const dynamodbCategoryClient = (
   client: DynamoDBDocumentClient,
-  tableName: string,
-  indexName: string
+  tableName: string
 ): CategoryClient => {
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convertRecord = (record: Record<string, any>) => ({
@@ -372,7 +371,7 @@ const dynamodbClient = (
 ): Client => {
   return {
     posts: dynamodbPostClient(client, tableName, indexName),
-    categories: dynamodbCategoryClient(client, tableName, indexName),
+    categories: dynamodbCategoryClient(client, tableName),
   };
 };
 
