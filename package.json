@@ -15,6 +15,7 @@
     "@nrwl/react": "^15.8.7",
     "@nrwl/vite": "15.8.7",
     "@nrwl/workspace": "15.8.5",
+    "@nx-extend/terraform": "^0.0.4",
     "@nxtensions/astro": "^3.3.0",
     "@swc/cli": "~0.1.55",
     "@swc/core": "^1.2.173",
