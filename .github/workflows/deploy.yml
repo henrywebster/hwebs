@@ -38,6 +38,8 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+            cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Setup PNPM
         uses: pnpm/action-setup@v2.2.2
@@ -47,17 +49,21 @@ jobs:
       - name: Install
         run: pnpm install
 
+      # TODO add TF format
       - name: Check Format
         run: pnpm nx format:check
 
       - name: Lint
         run: pnpm nx run-many --target=lint --parallel=3
 
-      - name: Plan Terraform
-        run: pnpm nx run tf:plan
+      - name: Initialize Terraform
+        run: terraform init
+
+      - name: Validate Terraform
+        run: terraform validate -no-color
 
       - name: Apply Terraform
-        run: pnpm nx run tf:apply
+        run: terraform apply -auth-approve -input=false
 
       - name: Seed DB
         # TODO Have this run reliably from nx config itself
