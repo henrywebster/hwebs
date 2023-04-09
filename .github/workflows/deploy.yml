@@ -46,8 +46,14 @@ jobs:
       - name: Lint
         run: pnpm nx run-many --target=lint --parallel=3
 
+      - name: Initialize Terraform
+        run: pnpm nx run tf:initialize
+
       - name: Plan Terraform
-        run: pnpm nx run tf:initialize && pnpm nx run tf:plan
+        run: pnpm nx run tf:plan
+
+      - name: Apply Terraform
+        run: pnpm nx run tf:apply
 
       - name: Seed DB
         # TODO Have this run reliably from nx config itself
