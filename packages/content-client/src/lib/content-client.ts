@@ -140,7 +140,9 @@ const sqliteClient = (db: BetterSqlite3.Database): Client => {
 };
 
 const dynamodbCategoryClient = (
-  client: DynamoDBDocumentClient
+  client: DynamoDBDocumentClient,
+  tableName: string,
+  indexName: string
 ): CategoryClient => {
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convertRecord = (record: Record<string, any>) => ({
@@ -150,7 +152,7 @@ const dynamodbCategoryClient = (
   return {
     async get(id) {
       const params = {
-        TableName: 'Items',
+        TableName: tableName,
         Key: {
           id: id,
           type: 'category',
@@ -165,7 +167,7 @@ const dynamodbCategoryClient = (
     },
     async list() {
       const params = {
-        TableName: 'Items',
+        TableName: tableName,
         FilterExpression: '#type = :t',
         ExpressionAttributeValues: {
           ':t': 'category',
@@ -182,7 +184,7 @@ const dynamodbCategoryClient = (
     },
     async create(title) {
       const params = {
-        TableName: 'Items',
+        TableName: tableName,
         Item: {
           id: uuidv4(),
           title: title,
@@ -197,7 +199,7 @@ const dynamodbCategoryClient = (
     },
     async update(id, title) {
       const params = {
-        TableName: 'Items',
+        TableName: tableName,
         Key: {
           id: id,
           type: 'category',
@@ -217,7 +219,7 @@ const dynamodbCategoryClient = (
     },
     async remove(id) {
       const params = {
-        TableName: 'Items',
+        TableName: tableName,
         Key: {
           id: id,
           type: 'category',
@@ -228,7 +230,11 @@ const dynamodbCategoryClient = (
   };
 };
 
-const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
+const dynamodbPostClient = (
+  client: DynamoDBDocumentClient,
+  tableName: string,
+  indexName: string
+): PostClient => {
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convertRecord = (record: Record<string, any>) => ({
     id: record['id'],
@@ -240,7 +246,7 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
   return {
     async get(id) {
       const params = {
-        TableName: 'Items',
+        TableName: tableName,
         Key: {
           id: id,
           type: 'post',
@@ -260,8 +266,8 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
       const params =
         category === undefined
           ? {
-              TableName: 'Items',
-              IndexName: 'post-index',
+              TableName: tableName,
+              IndexName: indexName,
               FilterExpression: '#type = :t',
               ExpressionAttributeValues: {
                 ':t': 'post',
@@ -271,8 +277,8 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
               },
             }
           : {
-              TableName: 'Items',
-              IndexName: 'post-index',
+              TableName: tableName,
+              IndexName: indexName,
               FilterExpression: '#type = :t and category = :c',
               ExpressionAttributeValues: {
                 ':t': 'post',
@@ -290,7 +296,7 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
     },
     async create(title, link, category, datetime) {
       const getParams = {
-        TableName: 'Items',
+        TableName: tableName,
         Key: {
           id: category,
           type: 'category',
@@ -299,7 +305,7 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
       };
 
       const params = {
-        TableName: 'Items',
+        TableName: tableName,
         Item: {
           id: uuidv4(),
           type: 'post',
@@ -321,7 +327,7 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
     },
     async update(id, title, link, category, datetime) {
       const params = {
-        TableName: 'Items',
+        TableName: tableName,
         Key: {
           id: id,
           type: 'post',
@@ -348,7 +354,7 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
     },
     async remove(id) {
       const params = {
-        TableName: 'Items',
+        TableName: tableName,
         Key: {
           id: id,
           type: 'post',
@@ -359,10 +365,14 @@ const dynamodbPostClient = (client: DynamoDBDocumentClient): PostClient => {
   };
 };
 
-const dynamodbClient = (client: DynamoDBDocumentClient): Client => {
+const dynamodbClient = (
+  client: DynamoDBDocumentClient,
+  tableName: string,
+  indexName: string
+): Client => {
   return {
-    posts: dynamodbPostClient(client),
-    categories: dynamodbCategoryClient(client),
+    posts: dynamodbPostClient(client, tableName, indexName),
+    categories: dynamodbCategoryClient(client, tableName, indexName),
   };
 };
 
@@ -370,6 +380,11 @@ interface clientConfig {
   readonly client: string;
   readonly dbfile?: string;
   readonly port?: string;
+  readonly endpoint?: string;
+  readonly protocol?: string;
+  readonly tableName?: string;
+  readonly region?: string;
+  readonly indexName?: string;
 }
 
 // TODO use enum?
@@ -380,10 +395,14 @@ const contentClient = (config: clientConfig): Client | undefined => {
     return dynamodbClient(
       DynamoDBDocumentClient.from(
         new DynamoDBClient({
-          region: 'us-east-1',
-          endpoint: `http://localhost:${config.port || 8000}`,
+          region: config.region || 'us-east-1',
+          endpoint: `${config.protocol || 'http'}://${
+            config.endpoint || 'localhost'
+          }:${config.port || 8000}`,
         })
-      )
+      ),
+      config.tableName || 'Items',
+      config.indexName || 'post-index'
     );
   }
   return undefined;

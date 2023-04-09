@@ -27,6 +27,7 @@ const globalDynamodb = new DynamoDBClient({
 let defaultCategoryId = '';
 let secondaryCategoryId = '';
 const time = Date.now();
+const defaultTableName = 'Items';
 
 beforeEach(async () => {
   globalSqlite
@@ -88,7 +89,10 @@ describe.each([
   { name: 'sqlite', client: sqlitePostClient(globalSqlite) },
   {
     name: 'dynamodb',
-    client: dynamodbPostClient(DynamoDBDocumentClient.from(globalDynamodb)),
+    client: dynamodbPostClient(
+      DynamoDBDocumentClient.from(globalDynamodb),
+      defaultTableName
+    ),
   },
 ])('Content Client: $name', ({ client }) => {
   it('should return undefined when key is not preset', () =>
@@ -177,7 +181,10 @@ describe.each([
   { name: 'sqlite', client: sqliteCategoryClient(globalSqlite) },
   {
     name: 'dynamodb',
-    client: dynamodbCategoryClient(DynamoDBDocumentClient.from(globalDynamodb)),
+    client: dynamodbCategoryClient(
+      DynamoDBDocumentClient.from(globalDynamodb),
+      defaultTableName
+    ),
   },
 ])('Category Client: $name', ({ client }) => {
   it('should return undefined when key is not preset', () =>

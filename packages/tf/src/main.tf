@@ -8,11 +8,12 @@ terraform {
 }
 
 provider "aws" {
+	# TODO get from env 
 	region = "us-east-2"
 }
 
-resource "aws_dynamodb_table" "hwebs-info-table" {
-
+resource "aws_dynamodb_table" "hwebs_info_table" {
+	# TODO get from env
 	name = "hwebs-info-table"
 	billing_mode = "PROVISIONED"
 	read_capacity = 5
@@ -43,4 +44,16 @@ resource "aws_dynamodb_table" "hwebs-info-table" {
 		read_capacity = 5
 		write_capacity = 5
 	}
+}
+
+data "aws_iam_policy_document" "hwebs_info_dynamodb_ro_policy" {
+	statement {
+		actions = ["dynamodb:DescribeTable", "dynamodb:Query", "dynamodb:Scan", "dynamodb:GetItem"]
+		resources = [resource.aws_dynamodb_table.hwebs_info_table.arn]
+	}
+}
+
+resource "aws_iam_role" "hwebs_info_dynamodb_ro_role" {
+	name = "hwebs-info-dynamodb-ro"
+	assume_role_policy = data.aws_iam_policy_document.hwebs_info_dynamodb_ro_policy.json
 }
